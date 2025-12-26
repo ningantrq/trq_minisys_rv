@@ -58,7 +58,7 @@ module test_core;
   always #5 clk = ~clk;
   initial begin
     fd = $fopen("reg.log", "w");
-    $dumpfile("test_core.vcd");
+    $dumpfile("tb_core.vcd");
     $dumpvars(0, tb_core);
 
     clk = 1'b0;
