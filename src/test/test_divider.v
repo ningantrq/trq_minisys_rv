@@ -134,5 +134,6 @@ module test_divider ();
 
     $display("----- DIVU testbench end -----");
     $display("----- DIVIDER testbench end -----");
+    #100 $finish;
   end
 endmodule

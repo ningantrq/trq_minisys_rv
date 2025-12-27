@@ -145,5 +145,6 @@ module test_multiplier ();
 
     $display("----- MULU testbench end -----");
     $display("----- MULTIPLIER testbench end -----");
+    #100 $finish;
   end
 endmodule

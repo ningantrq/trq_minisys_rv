@@ -39,6 +39,8 @@ module test_core;
       .clk_i(clk),
       .rst_i(rst),
 
+      .timer_interrupt_i(1'b0),
+
       .iram_data_i  (icache_data_w),
       .iram_done_i  (icache_done_w),
       .iram_enable_o(icache_enable_w),
@@ -58,8 +60,8 @@ module test_core;
   always #5 clk = ~clk;
   initial begin
     fd = $fopen("reg.log", "w");
-    $dumpfile("tb_core.vcd");
-    $dumpvars(0, tb_core);
+    $dumpfile("test_core.vcd");
+    $dumpvars(0, test_core);
 
     clk = 1'b0;
     rst = 1'b1;
