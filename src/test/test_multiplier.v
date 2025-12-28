@@ -42,25 +42,28 @@ module test_multiplier ();
     rst = 1'b1;
 
     #10 rst = 1'b0;
-
+//正数×正数
     mul_rs1_data_arr[0] = 32'h00000001;
     mul_rs2_data_arr[0] = 32'h00000001;
 
     mul_rs1_data_arr[1] = 32'h20241107;
     mul_rs2_data_arr[1] = 32'h19491001;
 
+//正数×负数
     mul_rs1_data_arr[2] = 32'h00000001;
     mul_rs2_data_arr[2] = -32'h00000001;
 
     mul_rs1_data_arr[3] = 32'h20241107;
     mul_rs2_data_arr[3] = -32'h19491001;
 
+//负数×正数
     mul_rs1_data_arr[4] = -32'h00000001;
     mul_rs2_data_arr[4] = 32'h00000001;
 
     mul_rs1_data_arr[5] = -32'h20241107;
     mul_rs2_data_arr[5] = 32'h19491001;
 
+//负数×负数
     mul_rs1_data_arr[6] = -32'h00000001;
     mul_rs2_data_arr[6] = -32'h00000001;
 
@@ -71,6 +74,7 @@ module test_multiplier ();
     $display("----- MUL testbench start -----");
 
     for (i = 0; i < MUL_TB_NUM; i = i + 1) begin
+      // 第一步：执行MUL指令获取低32位（32位乘法，返回低32位）
       inst     = `INST_MUL;
       rs1_data = mul_rs1_data_arr[i];
       rs2_data = mul_rs2_data_arr[i];
@@ -81,6 +85,7 @@ module test_multiplier ();
       result[31:0] = rd_data;
       #10;
 
+      // 第二步：执行MULH指令获取高32位（32位有符号乘法，返回高32位）
       inst   = `INST_MULH;
       enable = 1'b1;
       #10 enable = 1'b0;
@@ -107,6 +112,7 @@ module test_multiplier ();
       result[31:0] = rd_data;
       #10;
 
+      //32位有符号×无符号乘法（返回高32位）
       inst   = `INST_MULHSU;
       enable = 1'b1;
       #10 enable = 1'b0;
@@ -133,6 +139,7 @@ module test_multiplier ();
       result[31:0] = rd_data;
       #10;
 
+      //32位无符号乘法（返回高32位）
       inst   = `INST_MULHU;
       enable = 1'b1;
       #10 enable = 1'b0;
