@@ -4,10 +4,13 @@ module test_core;
   reg         clk;
   reg         rst;
 
+ // 指令存储器接口
   wire [31:0] icache_data_w;
   wire        icache_done_w;
   wire        icache_enable_w;
   wire [31:0] icache_addr_w;
+
+  // 数据存储器接口
   wire [31:0] dcache_data_rd_w;
   wire        dcache_done_w;
   wire        dcache_enable_w;
@@ -73,6 +76,7 @@ module test_core;
     $finish();
   end
 
+ // 每当PC提交到WB阶段时，记录所有寄存器状态
   always @(uut_core.pipeline_ctrl.mem_wb_pc_r) begin
     // verilog_format: off
     $fdisplay(fd, "ra\t%h", uut_core.regfile.x1_ra_r);
