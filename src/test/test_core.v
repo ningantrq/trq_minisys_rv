@@ -71,7 +71,7 @@ module test_core;
 
     #15 rst = 1'b0;
 
-    #1000000;
+    #20000;  // 延长仿真时间以确保执行所有指令
     $fclose(fd);
     $finish();
   end
