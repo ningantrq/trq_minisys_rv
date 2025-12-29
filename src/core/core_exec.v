@@ -8,7 +8,7 @@ module core_exec (
     input [31:0] rs1_data_i,
     input [31:0] rs2_data_i,
 
-    input [31:0] imm_i_o, imm_s_o, imm_b_o, imm_u_o, imm_j_o, shamt_o,
+    input [31:0] imm_i_i, imm_s_i, imm_b_i, imm_u_i, imm_j_i, shamt_i,
 
     output [31:0] pc_branch_o,// 分支目标地址
     output        pc_take_branch_o,// 是否跳转
