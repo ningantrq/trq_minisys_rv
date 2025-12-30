@@ -85,17 +85,80 @@ reg [31:0] div_rs2_data_arr[DIV_TB_NUM - 1:0];
 ### CPU集成测试
 1. 操作：同上
 
+    建议在Wave窗口中添加以下信号组：
+
+    **寄存器文件组**（用于验证算术逻辑指令）：
+    ```
+    uut_core.regfile.x1_ra_r    # 预期：0x00000005
+    uut_core.regfile.x2_sp_r    # 预期：0x0000000a
+    uut_core.regfile.x3_gp_r    # 预期：0x0000000f (ADD结果)
+    uut_core.regfile.x4_tp_r    # 预期：0x00000005 (SUB结果)
+    uut_core.regfile.x7_t2_r    # 预期：0x0000000f (OR结果)
+    uut_core.regfile.x8_s0_r    # 预期：0x0000000f (XOR结果)
+    uut_core.regfile.x9_s1_r    # 预期：0x00000000 (AND结果)
+    uut_core.regfile.x22_s6_r   # 预期：0x0000000a (SLLI结果)
+    uut_core.regfile.x29_t4_r   # 阶段标记（1-11）
+    ```
+
+    **乘除法单元组**（用于验证M扩展）：
+    ```
+    uut_core.multiplier.status_r
+    uut_core.multiplier.stall_o
+    uut_core.divider.status_r
+    uut_core.divider.stall_o
+    uut_core.regfile.x5_t0_r    # 乘除法操作数：7
+    uut_core.regfile.x6_t1_r    # 乘除法操作数：6
+    uut_core.regfile.x7_t2_r    # MUL结果：42
+    uut_core.regfile.x12_a2_r   # DIV结果：0
+    uut_core.regfile.x14_a4_r   # REM结果：6
+    ```
+
+    **访存接口组**（用于验证Load/Store）：
+    ```
+    dcache_enable_w
+    dcache_wr_w
+    dcache_rd_w
+    dcache_addr_w
+    dcache_data_wr_w
+    dcache_data_rd_w
+    dcache_done_w
+    ```
+
+    **CSR单元组**（用于验证Zicsr扩展）：
+    ```
+    uut_core.csr.mstatus_r
+    uut_core.csr.mtvec_r
+    uut_core.csr.mepc_r
+    ```
+
 2. 测试功能:
-验证`core_multiplier`模块的正确性，包括：
-- **MUL**：32位乘法（返回低32位）
-- **MULH**：32位有符号乘法（返回高32位）
-- **MULHSU**：32位有符号×无符号乘法（返回高32位）
-- **MULHU**：32位无符号乘法（返回高32位）
-准备8组测试数据：
-包括：
-- **正数×正数**：`1 × 1`、`0x20241107 × 0x19491001`
-- **正数×负数**：`1 × -1`、`0x20241107 × -0x19491001`
-- **负数×正数**：`-1 × 1`、`-0x20241107 × 0x19491001`
-- **负数×负数**：`-1 × -1`、`-0x20241107 × -0x19491001`
+验证完整的RISC-V处理器核心（`core_top`）功能：
+- 指令取指和执行
+- 寄存器读写
+- 数据存储器访问
+- 流水线控制
+
+    测试程序（全面覆盖RV32IMZicsr），`tool_bram_cache`预加载的测试程序包含**92条指令**，全面覆盖RV32IMZicsr指令集。
 
 3. 结果：
+寄存器记录见doc/test_result/core_test_reg.log。
+
+
+测试波形：
+![test_core_waveform_1](doc_figure/core_test_1.png "test_core_waveform_1")
+
+![test_core_waveform_2](doc_figure/core_test_2.png "test_core_waveform_2")
+
+![test_core_waveform_3](doc_figure/core_test_3.png "test_core_waveform_3")
+
+![test_core_waveform_4](doc_figure/core_test_4.png "test_core_waveform_4")
+
+![test_core_waveform_5](doc_figure/core_test_5.png "test_core_waveform_5")
+
+![test_core_waveform_6](doc_figure/core_test_6.png "test_core_waveform_6")
+
+![test_core_waveform_7](doc_figure/core_test_7.png "test_core_waveform_7")
+
+![test_core_waveform_8](doc_figure/core_test_8.png "test_core_waveform_8")
+
+4. 结果解释：
