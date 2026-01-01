@@ -35,7 +35,7 @@ VRAM与VGA显示相关部分可以先放一放，如果时间不够可以不开�
 - **Switch**: 24个拨码开关
 - **Timer**: 高精度定时器，支持周期计数和时间中断
 - **Keyboard**: 4x4矩阵键盘，支持16个按键（0-9, A-F）
-- **Segment**: 8位七段数码管，支持同时显示十六进制数字
+- **Segment**: 8位七段数码管，每个数码管独立显示，支持显示8位十六进制数
 - **VRAM**: 显存（用于VGA显示）
 - **RAM**: 主存储器
 
@@ -51,7 +51,7 @@ VRAM与VGA显示相关部分可以先放一放，如果时间不够可以不开�
 | LED | 0x30000000 | 0x30000000 - 0x30000017 | LED灯（0-23） |
 | Switch | 0x40000000 | 0x40000000 - 0x40000017 | 开关（0-23） |
 | Keyboard | 0x50000000 | 0x50000000 | 4x4矩阵键盘 |
-| Segment | 0x60000000 | 0x60000000 | 七段数码管 |
+| Segment | 0x60000000 | 0x60000000 | 七段数码管（8位独立显示） |
 | RAM | 0x80000000 | 0x80000000 - 0xFFFFFFFF | 主存储器 |
 
 ---
@@ -615,14 +615,16 @@ void calculator_input() {
 
 ### 概述
 
-8位七段数码管用于显示数字和字母，支持十六进制（0-9, A-F）。当前实现为所有8个数码管同时显示相同的内容（统一显示模式）。
+8位七段数码管用于显示数字和字母，支持十六进制（0-9, A-F）。采用时分复用技术，8个数码管可以独立显示不同内容，组成完整的8位十六进制数显示。
 
 ### 硬件特性
 
 - **数码管类型**: 共阴极七段数码管
 - **数量**: 8个数码管
-- **显示方式**: 所有数码管同时显示相同内容
+- **显示方式**: 时分复用，每个数码管独立显示
+- **刷新频率**: ~4KHz（每个数码管250μs，总周期2ms）
 - **支持字符**: 0-9, A-F（十六进制）
+- **无闪烁**: 刷新速度足够快，人眼无法察觉
 
 ### 七段数码管结构
 
@@ -642,67 +644,141 @@ void calculator_input() {
 
 | 寄存器地址 | 名称 | 读/写 | 说明 |
 |------------|------|-------|------|
-| 0x60000000 | SEG_DATA | W | 显示数据寄存器（低4位有效，0-F） |
+| 0x60000000 | SEG_DATA | W | 显示数据寄存器（32位，8个4位BCD码） |
+
+### 数据格式
+
+写入32位数据，每4位控制一个数码管：
+```
++--------+--------+--------+--------+--------+--------+--------+--------+
+| [31:28]| [27:24]| [23:20]| [19:16]| [15:12]| [11:8] | [7:4]  | [3:0]  |
+|  数码管7 |  数码管6 |  数码管5 |  数码管4 |  数码管3 |  数码管2 |  数码管1 |  数码管0 |
+|  (最左) |        |        |        |        |        |        | (最右) |
++--------+--------+--------+--------+--------+--------+--------+--------+
+```
+
+例如：写入 `0x12345678` 将显示为 `12345678`（十六进制）
 
 ### 控制方式
 
-- **只写寄存器**: 写入4位BCD码（0-F）
-- **自动译码**: 硬件自动将BCD码转换为七段显示码
-- **统一显示**: 所有8个数码管显示相同数字
+- **只写寄存器**: 写入32位数据（8个4位BCD码）
+- **自动译码**: 硬件自动将每个BCD码转换为七段显示码
+- **独立显示**: 每个数码管显示不同的数字
+- **时分复用**: 硬件自动快速切换显示，无需软件干预
 
-### C语言示例
+### C语言API
 
 ```c
 #define SEG_BASE_ADDR 0x60000000
 
-// 显示一个十六进制数字
-void seg_display(int value) {
-    *((volatile int *)(SEG_BASE_ADDR)) = value & 0xF;
+// 显示完整的32位数据（8个数码管）
+void seg_display_all(unsigned int value) {
+    *((volatile unsigned int *)(SEG_BASE_ADDR)) = value;
 }
 
-// 示例1：显示0-F循环
-void seg_cycle_display() {
-    while (1) {
-        for (int i = 0; i <= 0xF; i++) {
-            seg_display(i);
-            delay_ms(500);  // 延时500ms
-        }
-    }
+// 更新指定位置的数码管（0-7）
+void seg_display_digit(int position, int value) {
+    if (position < 0 || position > 7) return;
+    
+    unsigned int current = *((volatile unsigned int *)(SEG_BASE_ADDR));
+    unsigned int mask = ~(0xF << (position * 4));
+    current = (current & mask) | ((value & 0xF) << (position * 4));
+    *((volatile unsigned int *)(SEG_BASE_ADDR)) = current;
 }
 
-// 示例2：根据Switch状态显示
-void seg_display_switch() {
-    while (1) {
-        // 读取Switch 0-3的状态作为4位数字
-        int value = 0;
-        for (int i = 0; i < 4; i++) {
-            if (switch_is_on(i))
-                value |= (1 << i);
-        }
-        seg_display(value);
-    }
+// 清空所有数码管
+void seg_clear() {
+    *((volatile unsigned int *)(SEG_BASE_ADDR)) = 0x00000000;
 }
 
-// 示例3：倒计时显示
-void seg_countdown(int seconds) {
-    for (int i = seconds; i >= 0; i--) {
-        seg_display(i % 16);  // 只显示低4位
-        delay_ms(1000);       // 1秒延时
-    }
-    seg_display(0);  // 倒计时结束显示0
+// 显示十六进制数
+void seg_display_hex(unsigned int value) {
+    *((volatile unsigned int *)(SEG_BASE_ADDR)) = value;
+}
+```
+
+### C语言示例
+
+```c
+// 示例1：显示固定数字
+void seg_show_number() {
+    seg_display_all(0x12345678);  // 显示 12345678
+    delay_ms(2000);
+    seg_display_all(0xABCDEF00);  // 显示 ABCDEF00
+    delay_ms(2000);
 }
 
-// 示例4：显示LED状态（十六进制）
-void seg_display_led_status() {
-    while (1) {
-        // 读取LED 0-3的状态
-        int value = 0;
-        for (int i = 0; i < 4; i++) {
-            if (led_is_on(i))
-                value |= (1 << i);
-        }
-        seg_display(value);
+// 示例2：计数器显示（0-255）
+void seg_counter() {
+    for (unsigned int i = 0; i < 256; i++) {
+        seg_display_hex(i);  // 显示为 000000XX
         delay_ms(100);
+    }
+}
+
+// 示例3：逐位填充
+void seg_fill_digits() {
+    seg_clear();
+    for (int i = 0; i < 8; i++) {
+        seg_display_digit(i, i);  // 位置i显示数字i
+        delay_ms(200);
+    }
+    // 结果：显示 76543210
+}
+
+// 示例4：滚动显示
+void seg_scroll() {
+    unsigned int pattern = 0x12345678;
+    while (1) {
+        seg_display_hex(pattern);
+        // 循环左移4位
+        pattern = ((pattern << 4) | (pattern >> 28)) & 0xFFFFFFFF;
+        delay_ms(300);
+    }
+    // 效果：12345678 -> 23456781 -> 34567812 -> ...
+}
+
+// 示例5：显示时间（假设格式为HHMMSS，十六进制BCD）
+void seg_display_time(int hour, int min, int sec) {
+    unsigned int display = 0;
+    display |= ((hour / 10) & 0xF) << 20;   // 小时十位 -> 数码管5
+    display |= ((hour % 10) & 0xF) << 16;   // 小时个位 -> 数码管4
+    display |= ((min / 10) & 0xF) << 12;    // 分钟十位 -> 数码管3
+    display |= ((min % 10) & 0xF) << 8;     // 分钟个位 -> 数码管2
+    display |= ((sec / 10) & 0xF) << 4;     // 秒钟十位 -> 数码管1
+    display |= ((sec % 10) & 0xF);          // 秒钟个位 -> 数码管0
+    seg_display_all(display);
+}
+
+// 示例6：根据Switch状态显示（8个4位数）
+void seg_display_switches() {
+    while (1) {
+        unsigned int value = 0;
+        // 每4个Switch组成一个4位数，控制一个数码管
+        for (int digit = 0; digit < 8; digit++) {
+            int digit_val = 0;
+            for (int bit = 0; bit < 4; bit++) {
+                if (switch_is_on(digit * 4 + bit))
+                    digit_val |= (1 << bit);
+            }
+            value |= (digit_val & 0xF) << (digit * 4);
+        }
+        seg_display_all(value);
+        delay_ms(50);
+    }
+}
+
+// 示例7：二进制计数器可视化
+void seg_binary_counter() {
+    for (unsigned int count = 0; count < 256; count++) {
+        // 将8位二进制数的每一位单独显示在8个数码管上
+        unsigned int display = 0;
+        for (int i = 0; i < 8; i++) {
+            int bit = (count >> i) & 1;
+            display |= (bit << (i * 4));
+        }
+        seg_display_all(display);
+        delay_ms(200);
     }
 }
 ```
@@ -1013,39 +1089,134 @@ int main() {
 }
 ```
 
-### 示例2：键盘输入数码管显示（C语言）
+### 示例2：键盘输入数码管测试程序（C语言）
 
-这是 `trq_app/keyandseg/main.c` 的实际应用示例：
+这是 `trq_app/keyandseg/main.c` 的实际应用示例，展示了新数码管的多种功能：
 
 ```c
 #include "keyboard.h"
 #include "seg.h"
 
 void delay();
+void delay_short();
+void test_all_digits();
+void test_counter();
+void test_scroll();
+void keyboard_accumulator();
+
+// 测试模式说明
+// 按键 1: 测试所有数码管 - 依次在8个位置显示0-7
+// 按键 2: 计数器测试 - 从0计数到255，展示动态刷新
+// 按键 3: 滚动测试 - 12345678循环左移显示
+// 按键 4: 键盘累加器 - 连续输入8个按键，构成完整显示
+// 按键 F: 清空显示 - 所有数码管归零
+// 其他键: 顺序填充 - 从位置0-7依次填充按键值
 
 int main() {
     int last_key = 0;
     int current_key = 0;
+    int mode = 0;
     
-    seg_display(0);  // 初始显示0
+    seg_clear();
+    seg_display_all(0x12345678);  // 启动显示
+    delay();
     
     while (1) {
         current_key = keyboard_read();
         
-        // 检测按键变化（边沿触发）
         if (current_key != last_key && current_key != 0) {
-            seg_display(current_key);  // 更新数码管显示
+            switch (current_key) {
+                case 0x1:
+                    test_all_digits();
+                    break;
+                case 0x2:
+                    test_counter();
+                    break;
+                case 0x3:
+                    test_scroll();
+                    break;
+                case 0x4:
+                    keyboard_accumulator();
+                    break;
+                case 0xF:
+                    seg_clear();
+                    break;
+                default:
+                    seg_display_digit(mode, current_key);
+                    mode = (mode + 1) % 8;
+                    break;
+            }
+            
             last_key = current_key;
-            delay();  // 防抖延时
+            delay();
         } else if (current_key == 0) {
-            last_key = 0;  // 按键释放
+            last_key = 0;
         }
     }
     
     return 0;
 }
 
+// 测试所有数码管独立显示
+void test_all_digits() {
+    for (int i = 0; i < 8; i++) {
+        seg_display_digit(i, i);
+        delay_short();
+    }
+    delay();
+}
+
+// 计数器测试
+void test_counter() {
+    for (unsigned int i = 0; i < 256; i++) {
+        seg_display_hex(i);
+        delay_short();
+    }
+}
+
+// 滚动显示测试
+void test_scroll() {
+    unsigned int pattern = 0x12345678;
+    for (int i = 0; i < 16; i++) {
+        seg_display_hex(pattern);
+        pattern = ((pattern << 4) | (pattern >> 28)) & 0xFFFFFFFF;
+        delay_short();
+    }
+}
+
+// 键盘累加输入
+void keyboard_accumulator() {
+    unsigned int display_val = 0;
+    int count = 0;
+    int last_key = 0;
+    
+    seg_clear();
+    
+    while (count < 8) {
+        int key = keyboard_read();
+        
+        if (key != last_key && key != 0) {
+            display_val = (display_val << 4) | (key & 0xF);
+            seg_display_hex(display_val);
+            count++;
+            last_key = key;
+            delay();
+        } else if (key == 0) {
+            last_key = 0;
+        }
+    }
+    
+    delay();
+    delay();
+}
+
 void delay() {
+    for (int i = 0; i < 500000; ++i) {
+        asm volatile("nop");
+    }
+}
+
+void delay_short() {
     for (int i = 0; i < 100000; ++i) {
         asm volatile("nop");
     }
@@ -1053,39 +1224,48 @@ void delay() {
 ```
 
 **功能说明**：
-- 初始化时数码管显示0
-- 检测键盘输入（0-F）
-- 按键按下时，数码管显示对应数字
-- 防抖处理避免误触发
+- **启动演示**: 上电后显示 `12345678` 验证8位独立显示
+- **模式1（按键1）**: 依次在8个位置显示0-7，验证每个数码管工作
+- **模式2（按键2）**: 0-255计数，验证动态刷新无闪烁
+- **模式3（按键3）**: 滚动显示，验证时分复用效果
+- **模式4（按键4）**: 累加输入，验证实时更新能力
+- **清空（按键F）**: 清除显示
+- **自由输入**: 其他按键依次填充8个位置
 
-### 示例3：键盘密码锁（C语言）
+### 示例3：8位密码锁（C语言）
+
+利用8位数码管实现8位密码输入显示：
 
 ```c
 #include "keyboard.h"
 #include "seg.h"
 #include "led.h"
 
-#define PASSWORD_LENGTH 4
+#define PASSWORD_LENGTH 8
 
-int password[PASSWORD_LENGTH] = {1, 2, 3, 4};  // 预设密码1234
+int password[PASSWORD_LENGTH] = {1, 2, 3, 4, 5, 6, 7, 8};  // 预设8位密码
 int input_buffer[PASSWORD_LENGTH];
 int input_count = 0;
 
 void delay_ms(int ms);
 
 int main() {
-    seg_display(0);
+    seg_clear();
     
     while (1) {
         int key = keyboard_read();
         
         if (key != 0) {
-            // 显示当前按键
-            seg_display(key);
-            
             // 存入输入缓冲区
             if (input_count < PASSWORD_LENGTH) {
                 input_buffer[input_count++] = key;
+                
+                // 构建显示数据：已输入的密码
+                unsigned int display = 0;
+                for (int i = 0; i < input_count; i++) {
+                    display |= (input_buffer[i] & 0xF) << (i * 4);
+                }
+                seg_display_all(display);
                 
                 // 点亮对应LED指示输入进度
                 led_turn_on(input_count - 1);
@@ -1102,15 +1282,15 @@ int main() {
                 }
                 
                 if (correct) {
-                    // 密码正确：绿色LED全亮
+                    // 密码正确：显示AAAAAAAA，绿色LED全亮
                     for (int i = 0; i < 8; i++)
                         led_turn_on(i);
-                    seg_display(0xA);  // 显示A表示Accept
+                    seg_display_all(0xAAAAAAAA);  // 显示8个A表示Accept
                 } else {
-                    // 密码错误：红色LED全亮
+                    // 密码错误：显示EEEEEEEE，红色LED全亮
                     for (int i = 16; i < 24; i++)
                         led_turn_on(i);
-                    seg_display(0xE);  // 显示E表示Error
+                    seg_display_all(0xEEEEEEEE);  // 显示8个E表示Error
                 }
                 
                 delay_ms(2000);  // 显示结果2秒
@@ -1119,7 +1299,7 @@ int main() {
                 input_count = 0;
                 for (int i = 0; i < 24; i++)
                     led_turn_off(i);
-                seg_display(0);
+                seg_clear();
             }
             
             // 等待按键释放
