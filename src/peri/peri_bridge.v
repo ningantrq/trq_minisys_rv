@@ -21,7 +21,7 @@
 `define MEM_LED_ADDR        32'h30000000
 `define MEM_SWITCH_ADDR     32'h40000000
 `define MEM_KEYBOARD_ADDR   32'h50000000  // 键盘外设基地址（只读，返回4位键值）
-`define MEM_SEG_ADDR        32'h60000000  // 数码管外设基地址（只写，接收4位BCD数据）
+`define MEM_SEG_ADDR        32'h60000000  // 数码管外设基地址（只写，接收32位数据，8个4位BCD码）
 `define MEM_RAM_ADDR        32'h80000000
 // verilog_format: on
 
@@ -86,8 +86,8 @@ module peri_bridge (
 
     // ========== Segment Display接口 ==========
     // 七段数码管显示，只写接口
-    output reg       seg_wr_o,          // 数码管写使能
-    output reg [3:0] seg_data_o,        // 数码管显示数据（0-F）
+    output reg        seg_wr_o,          // 数码管写使能
+    output reg [31:0] seg_data_o,        // 数码管显示数据（8个4位BCD码）
 
     // ========== RAM接口 ==========
     input      [31:0] ram_data_rd_i,    // RAM读数据
@@ -265,12 +265,12 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
             end
 
             // ========== Segment Display访问 ==========
-            // 数码管为只写外设，提取低4位数据作为BCD码
+            // 数码管为只写外设，接收32位数据（8个4位BCD码）
             // seg_wr_o控制数码管模块的写使能
             `MEM_SEG_ADDR: begin
               status_r    <= STATUS_WAIT;
-              seg_wr_o    <= dram_wr_r;           // 传递写使能信号
-              seg_data_o  <= dram_data_wr_r[3:0]; // 提取低4位BCD数据
+              seg_wr_o    <= dram_wr_r;        // 传递写使能信号
+              seg_data_o  <= dram_data_wr_r;   // 传递32位数据（8个BCD码）
             end
 
             // ========== RAM访问 ==========
