@@ -171,7 +171,7 @@ reg [31:0] div_rs2_data_arr[DIV_TB_NUM - 1:0];
     add_wave {{/test_core/uut_core/csr/mepc_r}}
     ```
 
-    以上波形配置保存在trq_core_test/test_core_behav.wcfg文件中，也可直接导入Vivado 2024.1中。
+    以上波形配置保存在src/test/test_core_behav.wcfg文件中，也可直接导入Vivado 2024.1中。
 
 2. 测试功能:
 验证完整的RISC-V处理器核心（`core_top`）功能：
