@@ -8,9 +8,11 @@
 4. [LED控制](#led控制)
 5. [Switch开关控制](#switch开关控制)
 6. [Timer定时器控制](#timer定时器控制)
-7. [VRAM显存控制](#vram显存控制)
-8. [RAM内存访问](#ram内存访问)
-9. [完整示例程序](#完整示例程序)
+7. [Keyboard键盘控制](#keyboard键盘控制)
+8. [Segment数码管控制](#segment数码管控制)
+9. [VRAM显存控制](#vram显存控制)
+10. [RAM内存访问](#ram内存访问)
+11. [完整示例程序](#完整示例程序)
 
 ---
 
@@ -18,9 +20,9 @@
 
 该文档中有些程序并未进行实际运行测试，不保证正确性，只用作引导，该文档主要作用是提供外设的C语言调用与访问方法，具体应用程序提供了一些未经验证的示例，仅供参考
 
-VRAM与VGA显示相关部分可以先放一放，如果时间不够可以不开发与其相关的程序
+可能还会有的外设： PWM， watchdog
 
-外设支持还有键盘与数字灯，尚未编写完成，预计在2026.1.5之前编写完成。
+VRAM与VGA显示相关部分可以先放一放，如果时间不够可以不开发与其相关的程序
 
 ## 概述
 
@@ -32,6 +34,8 @@ VRAM与VGA显示相关部分可以先放一放，如果时间不够可以不开�
 - **LED**: 24个LED灯（8个绿色、8个黄色、8个红色）
 - **Switch**: 24个拨码开关
 - **Timer**: 高精度定时器，支持周期计数和时间中断
+- **Keyboard**: 4x4矩阵键盘，支持16个按键（0-9, A-F）
+- **Segment**: 8位七段数码管，支持同时显示十六进制数字
 - **VRAM**: 显存（用于VGA显示）
 - **RAM**: 主存储器
 
@@ -46,6 +50,8 @@ VRAM与VGA显示相关部分可以先放一放，如果时间不够可以不开�
 | VRAM | 0x20000000 | 0x20000000 - 0x2FFFFFFF | 显存 |
 | LED | 0x30000000 | 0x30000000 - 0x30000017 | LED灯（0-23） |
 | Switch | 0x40000000 | 0x40000000 - 0x40000017 | 开关（0-23） |
+| Keyboard | 0x50000000 | 0x50000000 | 4x4矩阵键盘 |
+| Segment | 0x60000000 | 0x60000000 | 七段数码管 |
 | RAM | 0x80000000 | 0x80000000 - 0xFFFFFFFF | 主存储器 |
 
 ---
@@ -468,6 +474,239 @@ void use_timer_interrupt() {
 }
 ```
 
+## Keyboard键盘控制
+
+### 概述
+
+4x4矩阵键盘是一种常见的输入设备，通过4根行线和4根列线的扫描组合，可以检测16个按键的状态。硬件采用扫描方式工作，自动完成按键检测和译码。
+
+### 硬件工作原理
+
+- **扫描方式**: 硬件自动逐列扫描（约21ms周期）
+- **按键检测**: 列线输出低电平，检测行线反馈判断按键位置
+- **自动译码**: 硬件将行列位置转换为对应的键值（0-F）
+
+### 键盘布局
+
+标准4x4矩阵键盘布局：
+
+```
+     COL0   COL1   COL2   COL3
+ROW0:  1      2      3      A
+ROW1:  4      5      6      B
+ROW2:  7      8      9      C
+ROW3:  E      0      F      D
+```
+
+### 地址映射
+
+| 寄存器地址 | 名称 | 读/写 | 说明 |
+|------------|------|-------|------|
+| 0x50000000 | KEY_VAL | R | 按键值寄存器（0-F，低4位有效） |
+
+### 读取方式
+
+- **只读寄存器**: 直接读取即可获得当前按键值
+- **返回值**: 0-F表示对应按键，0表示无按键或按键0
+
+### C语言示例
+
+```c
+#define KEYBOARD_BASE_ADDR 0x50000000
+
+// 读取按键值
+int keyboard_read() {
+    return *((volatile int *)(KEYBOARD_BASE_ADDR)) & 0xF;
+}
+
+// 示例1：等待按键并返回
+int wait_for_key() {
+    int key;
+    // 等待有效按键（非0）
+    do {
+        key = keyboard_read();
+    } while (key == 0);
+    
+    // 简单防抖延时
+    for (int i = 0; i < 100000; i++)
+        asm volatile("nop");
+    
+    return key;
+}
+
+// 示例2：检测按键按下并释放
+int get_key_press() {
+    int current_key, last_key = 0;
+    
+    while (1) {
+        current_key = keyboard_read();
+        
+        // 检测按键从按下到释放的边沿
+        if (last_key != 0 && current_key == 0) {
+            return last_key;  // 返回释放的按键值
+        }
+        
+        last_key = current_key;
+    }
+}
+
+// 示例3：密码输入
+int password_input(int *buffer, int max_len) {
+    int count = 0;
+    int key;
+    
+    while (count < max_len) {
+        key = get_key_press();  // 获取按键
+        buffer[count++] = key;   // 存入缓冲区
+        
+        // 如果按下'D'键，表示输入结束
+        if (key == 0xD)
+            break;
+    }
+    
+    return count;
+}
+
+// 示例4：计算器输入（配合LED显示）
+void calculator_input() {
+    int num1 = 0, num2 = 0, op = 0, result = 0;
+    int state = 0;  // 0=输入数字1, 1=输入运算符, 2=输入数字2
+    
+    while (1) {
+        int key = get_key_press();
+        
+        switch (state) {
+            case 0:  // 输入第一个数字
+                if (key >= 0 && key <= 9) {
+                    num1 = num1 * 10 + key;
+                    // 在LED上显示
+                    for (int i = 0; i < 8; i++) {
+                        led_set(i, (num1 >> i) & 1);
+                    }
+                } else if (key == 0xA) {  // 按'A'表示加法
+                    op = 1;
+                    state = 1;
+                }
+                break;
+                
+            case 1:  // 输入第二个数字
+                if (key >= 0 && key <= 9) {
+                    num2 = num2 * 10 + key;
+                    for (int i = 0; i < 8; i++) {
+                        led_set(i + 8, (num2 >> i) & 1);
+                    }
+                } else if (key == 0xD) {  // 按'D'计算结果
+                    if (op == 1)
+                        result = num1 + num2;
+                    // 显示结果
+                    for (int i = 0; i < 16; i++) {
+                        led_set(i, (result >> i) & 1);
+                    }
+                    state = 0;
+                    num1 = num2 = 0;
+                }
+                break;
+        }
+    }
+}
+```
+
+## Segment数码管控制
+
+### 概述
+
+8位七段数码管用于显示数字和字母，支持十六进制（0-9, A-F）。当前实现为所有8个数码管同时显示相同的内容（统一显示模式）。
+
+### 硬件特性
+
+- **数码管类型**: 共阴极七段数码管
+- **数量**: 8个数码管
+- **显示方式**: 所有数码管同时显示相同内容
+- **支持字符**: 0-9, A-F（十六进制）
+
+### 七段数码管结构
+
+```
+      A
+     ---
+  F |   | B
+     -G-
+  E |   | C
+     ---
+      D   DP
+```
+
+段位定义：{DP, G, F, E, D, C, B, A}
+
+### 地址映射
+
+| 寄存器地址 | 名称 | 读/写 | 说明 |
+|------------|------|-------|------|
+| 0x60000000 | SEG_DATA | W | 显示数据寄存器（低4位有效，0-F） |
+
+### 控制方式
+
+- **只写寄存器**: 写入4位BCD码（0-F）
+- **自动译码**: 硬件自动将BCD码转换为七段显示码
+- **统一显示**: 所有8个数码管显示相同数字
+
+### C语言示例
+
+```c
+#define SEG_BASE_ADDR 0x60000000
+
+// 显示一个十六进制数字
+void seg_display(int value) {
+    *((volatile int *)(SEG_BASE_ADDR)) = value & 0xF;
+}
+
+// 示例1：显示0-F循环
+void seg_cycle_display() {
+    while (1) {
+        for (int i = 0; i <= 0xF; i++) {
+            seg_display(i);
+            delay_ms(500);  // 延时500ms
+        }
+    }
+}
+
+// 示例2：根据Switch状态显示
+void seg_display_switch() {
+    while (1) {
+        // 读取Switch 0-3的状态作为4位数字
+        int value = 0;
+        for (int i = 0; i < 4; i++) {
+            if (switch_is_on(i))
+                value |= (1 << i);
+        }
+        seg_display(value);
+    }
+}
+
+// 示例3：倒计时显示
+void seg_countdown(int seconds) {
+    for (int i = seconds; i >= 0; i--) {
+        seg_display(i % 16);  // 只显示低4位
+        delay_ms(1000);       // 1秒延时
+    }
+    seg_display(0);  // 倒计时结束显示0
+}
+
+// 示例4：显示LED状态（十六进制）
+void seg_display_led_status() {
+    while (1) {
+        // 读取LED 0-3的状态
+        int value = 0;
+        for (int i = 0; i < 4; i++) {
+            if (led_is_on(i))
+                value |= (1 << i);
+        }
+        seg_display(value);
+        delay_ms(100);
+    }
+}
+```
+
 ## VRAM显存控制
 
 ### 概述
@@ -774,7 +1013,210 @@ int main() {
 }
 ```
 
-### 示例2：简单操作系统任务调度（C语言）
+### 示例2：键盘输入数码管显示（C语言）
+
+这是 `trq_app/keyandseg/main.c` 的实际应用示例：
+
+```c
+#include "keyboard.h"
+#include "seg.h"
+
+void delay();
+
+int main() {
+    int last_key = 0;
+    int current_key = 0;
+    
+    seg_display(0);  // 初始显示0
+    
+    while (1) {
+        current_key = keyboard_read();
+        
+        // 检测按键变化（边沿触发）
+        if (current_key != last_key && current_key != 0) {
+            seg_display(current_key);  // 更新数码管显示
+            last_key = current_key;
+            delay();  // 防抖延时
+        } else if (current_key == 0) {
+            last_key = 0;  // 按键释放
+        }
+    }
+    
+    return 0;
+}
+
+void delay() {
+    for (int i = 0; i < 100000; ++i) {
+        asm volatile("nop");
+    }
+}
+```
+
+**功能说明**：
+- 初始化时数码管显示0
+- 检测键盘输入（0-F）
+- 按键按下时，数码管显示对应数字
+- 防抖处理避免误触发
+
+### 示例3：键盘密码锁（C语言）
+
+```c
+#include "keyboard.h"
+#include "seg.h"
+#include "led.h"
+
+#define PASSWORD_LENGTH 4
+
+int password[PASSWORD_LENGTH] = {1, 2, 3, 4};  // 预设密码1234
+int input_buffer[PASSWORD_LENGTH];
+int input_count = 0;
+
+void delay_ms(int ms);
+
+int main() {
+    seg_display(0);
+    
+    while (1) {
+        int key = keyboard_read();
+        
+        if (key != 0) {
+            // 显示当前按键
+            seg_display(key);
+            
+            // 存入输入缓冲区
+            if (input_count < PASSWORD_LENGTH) {
+                input_buffer[input_count++] = key;
+                
+                // 点亮对应LED指示输入进度
+                led_turn_on(input_count - 1);
+            }
+            
+            // 检查是否输入完成
+            if (input_count == PASSWORD_LENGTH) {
+                int correct = 1;
+                for (int i = 0; i < PASSWORD_LENGTH; i++) {
+                    if (input_buffer[i] != password[i]) {
+                        correct = 0;
+                        break;
+                    }
+                }
+                
+                if (correct) {
+                    // 密码正确：绿色LED全亮
+                    for (int i = 0; i < 8; i++)
+                        led_turn_on(i);
+                    seg_display(0xA);  // 显示A表示Accept
+                } else {
+                    // 密码错误：红色LED全亮
+                    for (int i = 16; i < 24; i++)
+                        led_turn_on(i);
+                    seg_display(0xE);  // 显示E表示Error
+                }
+                
+                delay_ms(2000);  // 显示结果2秒
+                
+                // 重置
+                input_count = 0;
+                for (int i = 0; i < 24; i++)
+                    led_turn_off(i);
+                seg_display(0);
+            }
+            
+            // 等待按键释放
+            while (keyboard_read() != 0)
+                ;
+            delay_ms(50);  // 防抖
+        }
+    }
+    
+    return 0;
+}
+
+void delay_ms(int ms) {
+    for (int i = 0; i < ms; i++) {
+        for (int j = 0; j < 10000; j++) {
+            asm volatile("nop");
+        }
+    }
+}
+```
+
+### 示例4：简单计算器（C语言）
+
+```c
+#include "keyboard.h"
+#include "seg.h"
+
+int get_key_press();
+void delay_ms(int ms);
+
+int main() {
+    int num1 = 0, num2 = 0, result = 0;
+    int state = 0;  // 0=输入num1, 1=输入num2, 2=显示结果
+    
+    seg_display(0);
+    
+    while (1) {
+        int key = get_key_press();
+        
+        if (state == 0) {
+            // 输入第一个数字
+            if (key >= 0 && key <= 9) {
+                num1 = key;
+                seg_display(num1);
+            } else if (key == 0xA) {  // 按A键表示"+"
+                state = 1;
+                seg_display(0xA);  // 显示运算符
+                delay_ms(500);
+            }
+        } else if (state == 1) {
+            // 输入第二个数字
+            if (key >= 0 && key <= 9) {
+                num2 = key;
+                seg_display(num2);
+            } else if (key == 0xD) {  // 按D键表示"="
+                result = num1 + num2;
+                seg_display(result & 0xF);  // 只显示低4位
+                state = 2;
+            }
+        } else if (state == 2) {
+            // 显示结果后，任意键重置
+            if (key != 0) {
+                state = 0;
+                num1 = num2 = result = 0;
+                seg_display(0);
+            }
+        }
+    }
+    
+    return 0;
+}
+
+int get_key_press() {
+    int key;
+    // 等待有效按键
+    do {
+        key = keyboard_read();
+    } while (key == 0);
+    
+    // 等待按键释放
+    while (keyboard_read() != 0)
+        ;
+    
+    delay_ms(50);  // 防抖
+    return key;
+}
+
+void delay_ms(int ms) {
+    for (int i = 0; i < ms; i++) {
+        for (int j = 0; j < 10000; j++) {
+            asm volatile("nop");
+        }
+    }
+}
+```
+
+### 示例5：简单操作系统任务调度（C语言）
 
 ```c
 #include <stdio.h>
@@ -866,6 +1308,12 @@ int main() {
 
 // Switch
 #define SWITCH_BASE 0x40000000
+
+// Keyboard
+#define KEYBOARD_BASE_ADDR 0x50000000
+
+// Segment Display (7-Segment)
+#define SEG_BASE_ADDR 0x60000000
 
 // RAM
 #define RAM_BASE 0x80000000
