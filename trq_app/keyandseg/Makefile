@@ -18,7 +18,7 @@ main.bin: main.elf
 	$(RISCV_OBJCOPY) -O binary $< $@
 
 main.coe: main.bin
-	python3 ../../difftest/script/bin_to_coe.py --input-file $< --output-file $@
+	python3 ../../script/bin_to_coe.py --input-file $< --output-file $@
 
 clean:
 	rm -rf *.elf *.bin *.coe *.dump
