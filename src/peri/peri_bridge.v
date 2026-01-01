@@ -20,6 +20,8 @@
 `define MEM_VRAM_ADDR       32'h20000000
 `define MEM_LED_ADDR        32'h30000000
 `define MEM_SWITCH_ADDR     32'h40000000
+`define MEM_KEYBOARD_ADDR   32'h50000000  // 键盘外设基地址（只读，返回4位键值）
+`define MEM_SEG_ADDR        32'h60000000  // 数码管外设基地址（只写，接收4位BCD数据）
 `define MEM_RAM_ADDR        32'h80000000
 // verilog_format: on
 
@@ -77,6 +79,15 @@ module peri_bridge (
     // ========== Switch接口 ==========
     output reg [4:0] switch_idx_o,      // Switch索引
     input            switch_status_i,   // Switch状态
+
+    // ========== Keyboard接口 ==========
+    // 4x4矩阵键盘，只读接口
+    input      [3:0] keyboard_val_i,    // 键盘当前按键值（0-F）
+
+    // ========== Segment Display接口 ==========
+    // 七段数码管显示，只写接口
+    output reg       seg_wr_o,          // 数码管写使能
+    output reg [3:0] seg_data_o,        // 数码管显示数据（0-F）
 
     // ========== RAM接口 ==========
     input      [31:0] ram_data_rd_i,    // RAM读数据
@@ -246,6 +257,22 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               switch_idx_o <= dram_addr_r[4:0];
             end
 
+            // ========== Keyboard访问 ==========
+            // 键盘为只读外设，直接进入等待状态
+            // 在STATUS_WAIT阶段读取keyboard_val_i并返回
+            `MEM_KEYBOARD_ADDR: begin
+              status_r <= STATUS_WAIT;
+            end
+
+            // ========== Segment Display访问 ==========
+            // 数码管为只写外设，提取低4位数据作为BCD码
+            // seg_wr_o控制数码管模块的写使能
+            `MEM_SEG_ADDR: begin
+              status_r    <= STATUS_WAIT;
+              seg_wr_o    <= dram_wr_r;           // 传递写使能信号
+              seg_data_o  <= dram_data_wr_r[3:0]; // 提取低4位BCD数据
+            end
+
             // ========== RAM访问 ==========
             `MEM_RAM_ADDR: begin  // ram
               status_r      <= STATUS_WAIT;
@@ -283,6 +310,21 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               status_r       <= STATUS_DONE;
               dram_data_rd_r <= {32{switch_status_i}};
               dram_done_r    <= 1'b1;
+            end
+
+            // ========== Keyboard读取完成 ==========
+            // 从keyboard_val_i读取4位按键值，扩展为32位返回
+            `MEM_KEYBOARD_ADDR: begin  // keyboard
+              status_r       <= STATUS_DONE;
+              dram_data_rd_r <= {28'h0, keyboard_val_i};  // 高28位填0，低4位为键值
+              dram_done_r    <= 1'b1;
+            end
+
+            // ========== Segment Display写入完成 ==========
+            // 数码管写操作无需返回数据，直接完成
+            `MEM_SEG_ADDR: begin  // segment display
+              status_r    <= STATUS_DONE;
+              dram_done_r <= 1'b1;  // 写操作完成标志
             end
 
             `MEM_RAM_ADDR: begin  // ram

@@ -65,7 +65,15 @@ module minisys_soc (
     output [3:0] green_o,
     output [3:0] blue_o,
     output       h_sync_o,
-    output       v_sync_o
+    output       v_sync_o,
+
+    // keyboard - 4x4矩阵键盘接口
+    input  [3:0] key_row_i,   // 键盘行输入（连接到键盘行线）
+    output [3:0] key_col_o,   // 键盘列输出（用于扫描）
+
+    // segment display - 七段数码管显示接口
+    output [7:0] seg_an_o,    // 数码管片选信号
+    output [7:0] seg_out_o    // 数码管段选信号
 );
   wire clk_w;
 
@@ -207,6 +215,13 @@ module minisys_soc (
       .switch_idx_o   (switch_idx_w),
       .switch_status_i(switch_status_w),
 
+      // keyboard - 连接键盘外设的读取接口
+      .keyboard_val_i(keyboard_val_w),  // 从键盘模块读取当前按键值
+
+      // segment display - 连接数码管外设的写入接口
+      .seg_wr_o  (seg_wr_w),    // 输出写使能到数码管模块
+      .seg_data_o(seg_data_w),  // 输出显示数据到数码管模块
+
       // ram
       .ram_data_rd_i(ram_data_rd_w),
       .ram_done_i   (ram_done_w),
@@ -317,6 +332,13 @@ module minisys_soc (
   wire [4:0] switch_idx_w;
   wire       switch_status_w;
 
+  // 键盘外设信号
+  wire [3:0] keyboard_val_w;  // 从键盘模块读取的按键值（0-F）
+
+  // 数码管显示外设信号
+  wire       seg_wr_w;        // 数码管写使能信号（来自peri_bridge）
+  wire [3:0] seg_data_w;      // 数码管显示数据（来自peri_bridge）
+
   peri_switch switch (
       .idx_i(switch_idx_w),
       .status_o(switch_status_w),
@@ -345,6 +367,40 @@ module minisys_soc (
       .sw21_i(sw21_i),
       .sw22_i(sw22_i),
       .sw23_i(sw23_i)
+  );
+
+  // ========================================================================
+  // 键盘外设实例化
+  // ========================================================================
+  // 功能：4x4矩阵键盘扫描和译码
+  // 内存映射地址：0x50000000（只读）
+  // 返回值：4位BCD码（0-F），表示当前按下的按键
+  peri_keyboard keyboard (
+      .clk_i(clk_w),           // 系统时钟
+      .rst_i(rst_i),           // 复位信号
+
+      .row_i(key_row_i),       // 连接到物理键盘的行输入
+      .col_o(key_col_o),       // 连接到物理键盘的列输出
+
+      .rd_i(1'b1),             // 读使能（始终使能）
+      .key_val_o(keyboard_val_w)  // 输出当前按键值到peri_bridge
+  );
+
+  // ========================================================================
+  // 七段数码管显示外设实例化
+  // ========================================================================
+  // 功能：将4位BCD码转换为七段显示码，驱动8个数码管同时显示
+  // 内存映射地址：0x60000000（只写）
+  // 写入值：4位BCD码（0-F），数码管显示对应的字符
+  peri_seg seg (
+      .clk_i(clk_w),           // 系统时钟
+      .rst_i(rst_i),           // 复位信号
+
+      .wr_i(seg_wr_w),         // 写使能（来自peri_bridge）
+      .seg_data_i(seg_data_w), // 显示数据（来自peri_bridge）
+
+      .seg_an_o(seg_an_o),     // 连接到物理数码管的片选信号
+      .seg_out_o(seg_out_o)    // 连接到物理数码管的段选信号
   );
 
   peri_vga vga (
