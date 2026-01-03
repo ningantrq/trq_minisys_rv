@@ -1,0 +1,2 @@
+ip_divider.vhd,vhdl,xil_defaultlib,../../../../../ip/ip_divider/sim/ip_divider.vhd,
+glbl.v,Verilog,xil_defaultlib,glbl.v

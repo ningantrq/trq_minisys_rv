@@ -1,0 +1,26 @@
+0.7
+2020.2
+May 22 2024
+19:03:11
+D:/trq_minisys_rv-new/ip/ip_divider/sim/ip_divider.vhd,1767421285,vhdl,,,,ip_divider,,,,,,,,
+D:/trq_minisys_rv-new/ip/ip_multiplier/sim/ip_multiplier.vhd,1767421260,vhdl,,,,ip_multiplier,,,,,,,,
+D:/trq_minisys_rv-new/project_1/project_1.sim/sim_1/behav/xsim/glbl.v,1708598507,verilog,,,,glbl,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_alu.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/core/core_csr.v,D:/trq_minisys_rv-new/src/core/core_defs.v,core_alu,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_csr.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/core/core_decode.v,D:/trq_minisys_rv-new/src/core/core_defs.v,core_csr,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_decode.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/core/core_divider.v,D:/trq_minisys_rv-new/src/core/core_defs.v,core_decode,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_defs.v,1767357681,verilog,,,,,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_divider.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/test/test_divider.v,D:/trq_minisys_rv-new/src/core/core_defs.v,core_divider,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_exec.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/core/core_fetch.v,D:/trq_minisys_rv-new/src/core/core_defs.v,core_exec,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_fetch.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/core/core_lsu.v,,core_fetch,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_lsu.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/core/core_multiplier.v,D:/trq_minisys_rv-new/src/core/core_defs.v,core_lsu,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_multiplier.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/core/core_pipeline_ctrl.v,D:/trq_minisys_rv-new/src/core/core_defs.v,core_multiplier,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_pipeline_ctrl.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/core/core_regfile.v,D:/trq_minisys_rv-new/src/core/core_defs.v,core_pipeline_ctrl,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_regfile.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/core/core_top.v,,core_regfile,,,,,,,,
+D:/trq_minisys_rv-new/src/core/core_top.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/test/tool_bram_cache.v,,core_top,,,,,,,,
+D:/trq_minisys_rv-new/src/peri/peri_pwm.v,1767440191,verilog,,,,peri_pwm,,,,,,,,
+D:/trq_minisys_rv-new/src/peri/peri_watchdog.v,1767444325,verilog,,,,peri_watchdog,,,,,,,,
+D:/trq_minisys_rv-new/src/test/test_core.v,1767357681,verilog,,,,test_core,,,,,,,,
+D:/trq_minisys_rv-new/src/test/test_divider.v,1767357681,verilog,,,D:/trq_minisys_rv-new/src/core/core_defs.v,test_divider,,,,,,,,
+D:/trq_minisys_rv-new/src/test/test_peri_pwm.v,1767440849,verilog,,,D:/trq_minisys_rv-new/src/peri/peri_pwm.v,test_peri_pwm,,,,,,,,
+D:/trq_minisys_rv-new/src/test/test_peri_watchdog.v,1767439864,verilog,,,D:/trq_minisys_rv-new/src/peri/peri_watchdog.v,test_peri_watchdog,,,,,,,,
+D:/trq_minisys_rv-new/src/test/tool_bram_cache.v,1767357681,verilog,,D:/trq_minisys_rv-new/src/test/test_core.v,,tool_bram_cache,,,,,,,,

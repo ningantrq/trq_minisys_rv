@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2024.1 (64-bit)
+# SW Build 5076996 on Wed May 22 18:37:14 MDT 2024
+# IP Build 5075265 on Wed May 22 21:45:21 MDT 2024
+# SharedData Build 5076995 on Wed May 22 18:29:18 MDT 2024
+# Start of session at: Sat Jan  3 14:21:34 2026
+# Process ID: 4180
+# Current directory: D:/trq_minisys_rv-new/project_1/project_1.runs/ip_divider_synth_1
+# Command line: vivado.exe -log ip_divider.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source ip_divider.tcl
+# Log file: D:/trq_minisys_rv-new/project_1/project_1.runs/ip_divider_synth_1/ip_divider.vds
+# Journal file: D:/trq_minisys_rv-new/project_1/project_1.runs/ip_divider_synth_1\vivado.jou
+# Running On        :LAPTOP-JVUVQERE
+# Platform          :Windows Server 2016 or Windows 10
+# Operating System  :22631
+# Processor Detail  :12th Gen Intel(R) Core(TM) i5-12500H
+# CPU Frequency     :3110 MHz
+# CPU Physical cores:12
+# CPU Logical cores :16
+# Host memory       :16908 MB
+# Swap memory       :5905 MB
+# Total Virtual     :22813 MB
+# Available Virtual :8781 MB
+#-----------------------------------------------------------
+source ip_divider.tcl -notrace
