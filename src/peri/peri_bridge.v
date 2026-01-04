@@ -81,8 +81,10 @@ module peri_bridge (
     input            switch_status_i,   // Switch状态
 
     // ========== Keyboard接口 ==========
-    // 4x4矩阵键盘，只读接口
+    // 4x4矩阵键盘，只读接口，支持程序查询方式
     input      [3:0] keyboard_val_i,    // 键盘当前按键值（0-F）
+    input            keyboard_ready_i,  // 键盘数据就绪标志（1=有新按键，0=无新数据）
+    output reg       keyboard_rd_o,     // 键盘读取信号（通知键盘清除就绪标志）
 
     // ========== Segment Display接口 ==========
     // 七段数码管显示，只写接口
@@ -146,6 +148,7 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
 
       timer_timecmp_o  <= 32'hffffffff;
       timer_timecmph_o <= 32'hffffffff;
+      keyboard_rd_o    <= 1'b0;
     end else begin
       // UART状态更新
       if (tx_done_i) uart_tx_flag_r <= 32'h0;// 发送完成，清除忙标志
@@ -258,10 +261,11 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
             end
 
             // ========== Keyboard访问 ==========
-            // 键盘为只读外设，直接进入等待状态
-            // 在STATUS_WAIT阶段读取keyboard_val_i并返回
+            // 键盘为只读外设，采用程序查询方式
+            // 进入STATUS_WAIT后检查data_ready标志，未就绪时持续等待
             `MEM_KEYBOARD_ADDR: begin
               status_r <= STATUS_WAIT;
+              keyboard_rd_o <= 1'b0;  // 初始化读取信号
             end
 
             // ========== Segment Display访问 ==========
@@ -312,12 +316,21 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               dram_done_r    <= 1'b1;
             end
 
-            // ========== Keyboard读取完成 ==========
-            // 从keyboard_val_i读取4位按键值，扩展为32位返回
+            // ========== Keyboard程序查询方式读取 ==========
+            // 检查data_ready标志：
+            //   - 未就绪(0)：保持STATUS_WAIT，CPU继续阻塞等待
+            //   - 已就绪(1)：读取数据，发送rd信号清除标志，完成操作
             `MEM_KEYBOARD_ADDR: begin  // keyboard
-              status_r       <= STATUS_DONE;
-              dram_data_rd_r <= {28'h0, keyboard_val_i};  // 高28位填0，低4位为键值
-              dram_done_r    <= 1'b1;
+              if (keyboard_ready_i) begin
+                // 数据就绪，可以读取
+                status_r       <= STATUS_DONE;
+                dram_data_rd_r <= {28'h0, keyboard_val_i};  // 高28位填0，低4位为键值
+                dram_done_r    <= 1'b1;
+                keyboard_rd_o  <= 1'b1;  // 发送读取信号，通知键盘清除就绪标志
+              end else begin
+                // 数据未就绪，继续等待（CPU阻塞）
+                status_r <= STATUS_WAIT;
+              end
             end
 
             // ========== Segment Display写入完成 ==========
@@ -344,6 +357,7 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
           status_r <= STATUS_IDLE;
           uart_tx_enable_r <= 1'b0;
           dram_done_r <= 1'b0;
+          keyboard_rd_o <= 1'b0;  // 清除键盘读取信号
         end
 
         default: ;

@@ -215,8 +215,10 @@ module minisys_soc (
       .switch_idx_o   (switch_idx_w),
       .switch_status_i(switch_status_w),
 
-      // keyboard - 连接键盘外设的读取接口
-      .keyboard_val_i(keyboard_val_w),  // 从键盘模块读取当前按键值
+      // keyboard - 连接键盘外设的读取接口（程序查询方式）
+      .keyboard_val_i(keyboard_val_w),    // 从键盘模块读取当前按键值
+      .keyboard_ready_i(keyboard_ready_w), // 从键盘模块读取就绪标志
+      .keyboard_rd_o(keyboard_rd_w),      // 发送读取信号到键盘模块
 
       // segment display - 连接数码管外设的写入接口
       .seg_wr_o  (seg_wr_w),    // 输出写使能到数码管模块
@@ -333,7 +335,9 @@ module minisys_soc (
   wire       switch_status_w;
 
   // 键盘外设信号
-  wire [3:0] keyboard_val_w;  // 从键盘模块读取的按键值（0-F）
+  wire [3:0] keyboard_val_w;      // 键盘按键值
+  wire       keyboard_ready_w;    // 键盘数据就绪标志
+  wire       keyboard_rd_w;       // 键盘读取信号
 
   // 数码管显示外设信号
   wire        seg_wr_w;        // 数码管写使能信号（来自peri_bridge）
@@ -376,14 +380,15 @@ module minisys_soc (
   // 内存映射地址：0x50000000（只读）
   // 返回值：4位BCD码（0-F），表示当前按下的按键
   peri_keyboard keyboard (
-      .clk_i(clk_w),           // 系统时钟
-      .rst_i(rst_i),           // 复位信号
+      .clk_i(clk_w),                // 系统时钟
+      .rst_i(rst_i),                // 复位信号
 
-      .row_i(key_row_i),       // 连接到物理键盘的行输入
-      .col_o(key_col_o),       // 连接到物理键盘的列输出
+      .row_i(key_row_i),            // 连接到物理键盘的行输入
+      .col_o(key_col_o),            // 连接到物理键盘的列输出
 
-      .rd_i(1'b1),             // 读使能（始终使能）
-      .key_val_o(keyboard_val_w)  // 输出当前按键值到peri_bridge
+      .rd_i(keyboard_rd_w),         // 读取信号（来自peri_bridge）
+      .key_val_o(keyboard_val_w),   // 输出当前按键值到peri_bridge
+      .data_ready_o(keyboard_ready_w) // 输出数据就绪标志到peri_bridge
   );
 
   // ========================================================================

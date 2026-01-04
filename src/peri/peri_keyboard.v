@@ -22,7 +22,8 @@ module peri_keyboard (
     output reg [3:0] col_o,
     
     input rd_i,
-    output [3:0] key_val_o
+    output [3:0] key_val_o,
+    output reg data_ready_o
 );
 
 // ========================================================================
@@ -152,11 +153,14 @@ end
 // ROW2:   7      8      9      C
 // ROW3:   E      0      F      D
 reg [3:0] keyboard_val;  // 当前按键值
+reg       key_valid;     // 按键有效标志（内部使用）
 
 always @(posedge key_clk or posedge rst_i) begin
-    if (rst_i)
+    if (rst_i) begin
         keyboard_val <= 4'h0;
-    else if (key_pressed_flag) begin  // 有按键按下时进行译码
+        key_valid <= 1'b0;
+    end else if (key_pressed_flag) begin  // 有按键按下时进行译码
+        key_valid <= 1'b1;  // 设置按键有效标志
         case ({col_val, row_val})  // 根据列值和行值的组合译码
             // 第0列 (col=1110)
             8'b1110_1110: keyboard_val <= 4'h1;  // ROW0,COL0 -> 1
@@ -183,6 +187,30 @@ always @(posedge key_clk or posedge rst_i) begin
             8'b0111_0111: keyboard_val <= 4'hD;  // ROW3,COL3 -> D
             default: keyboard_val <= keyboard_val;  // 保持原值
         endcase
+    end else if (!key_pressed_flag && key_valid) begin
+        // 按键释放后清除有效标志
+        key_valid <= 1'b0;
+    end
+end
+
+// ========================================================================
+// 数据就绪标志管理 - 实现程序查询方式
+// ========================================================================
+// data_ready_o: 数据就绪标志，CPU通过检查此位判断是否可以读取
+//   1: 有新按键按下，数据就绪，CPU可以读取
+//   0: 无新数据，CPU需要等待
+// 当CPU读取（rd_i=1）时，自动清除就绪标志，等待下一次按键
+always @(posedge clk_i or posedge rst_i) begin
+    if (rst_i) begin
+        data_ready_o <= 1'b0;
+    end else begin
+        if (key_valid && !data_ready_o) begin
+            // 检测到新按键，设置就绪标志
+            data_ready_o <= 1'b1;
+        end else if (rd_i && data_ready_o) begin
+            // CPU读取后，清除就绪标志
+            data_ready_o <= 1'b0;
+        end
     end
 end
 
