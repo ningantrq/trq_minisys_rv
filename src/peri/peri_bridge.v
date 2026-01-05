@@ -22,6 +22,8 @@
 `define MEM_SWITCH_ADDR     32'h40000000
 `define MEM_KEYBOARD_ADDR   32'h50000000  // 键盘外设基地址（只读，返回4位键值）
 `define MEM_SEG_ADDR        32'h60000000  // 数码管外设基地址（只写，接收32位数据，8个4位BCD码）
+`define MEM_PWM_ADDR        32'h70000000  // PWM控制器基地址
+`define MEM_WATCHDOG_ADDR   32'h90000000  // 看门狗基地址
 `define MEM_RAM_ADDR        32'h80000000
 // verilog_format: on
 
@@ -99,7 +101,21 @@ module peri_bridge (
     output reg        ram_rd_o,         // RAM读使能
     output reg [31:0] ram_addr_o,       // RAM地址
     output reg [31:0] ram_data_wr_o,    // RAM写数据
-    output reg [31:0] ram_mask_wr_o     // RAM写掩码
+    output reg [31:0] ram_mask_wr_o,     // RAM写掩码
+
+    // ========== PWM接口 ==========    
+    output reg        pwm_reg_wr_o,      // PWM寄存器写使能
+    output reg        pwm_reg_rd_o,      // PWM寄存器读使能
+    output reg [31:0] pwm_reg_addr_o,    // PWM寄存器地址
+    output reg [31:0] pwm_reg_data_wr_o, // PWM寄存器写数据
+    input  [31:0]     pwm_reg_data_rd_i, // PWM寄存器读数据
+    
+    // ========== 看门狗接口 ==========    
+    output reg        wdt_reg_wr_o,      // 看门狗寄存器写使能
+    output reg        wdt_reg_rd_o,      // 看门狗寄存器读使能
+    output reg [31:0] wdt_reg_addr_o,    // 看门狗寄存器地址
+    output reg [31:0] wdt_reg_data_wr_o, // 看门狗寄存器写数据
+    input  [31:0]     wdt_reg_data_rd_i  // 看门狗寄存器读数据
 );
 // UART内部寄存器
 reg [31:0] uart_tx_data_r;   // 发送数据缓冲
@@ -149,6 +165,16 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
       timer_timecmp_o  <= 32'hffffffff;
       timer_timecmph_o <= 32'hffffffff;
       keyboard_rd_o    <= 1'b0;
+      
+      pwm_reg_wr_o     <= 1'b0;
+      pwm_reg_rd_o     <= 1'b0;
+      pwm_reg_addr_o   <= 32'h0;
+      pwm_reg_data_wr_o <= 32'h0;
+      
+      wdt_reg_wr_o     <= 1'b0;
+      wdt_reg_rd_o     <= 1'b0;
+      wdt_reg_addr_o   <= 32'h0;
+      wdt_reg_data_wr_o <= 32'h0;
     end else begin
       // UART状态更新
       if (tx_done_i) uart_tx_flag_r <= 32'h0;// 发送完成，清除忙标志
@@ -288,6 +314,28 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               ram_mask_wr_o <= dram_mask_wr_r;
             end
 
+            // ========== PWM访问 ==========
+            `MEM_PWM_ADDR: begin
+              status_r <= STATUS_WAIT;
+              
+              // 直接将PWM寄存器的读写信号传递给PWM模块
+              pwm_reg_wr_o <= dram_wr_r;
+              pwm_reg_rd_o <= dram_rd_r;
+              pwm_reg_addr_o <= dram_addr_r;
+              pwm_reg_data_wr_o <= dram_data_wr_r;
+            end
+            
+            // ========== 看门狗访问 ==========
+            `MEM_WATCHDOG_ADDR: begin
+              status_r <= STATUS_WAIT;
+              
+              // 直接将看门狗寄存器的读写信号传递给看门狗模块
+              wdt_reg_wr_o <= dram_wr_r;
+              wdt_reg_rd_o <= dram_rd_r;
+              wdt_reg_addr_o <= dram_addr_r;
+              wdt_reg_data_wr_o <= dram_data_wr_r;
+            end
+
             default: status_r <= STATUS_DONE;
           endcase
         end
@@ -339,6 +387,28 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               status_r    <= STATUS_DONE;
               dram_done_r <= 1'b1;  // 写操作完成标志
             end
+            
+            // ========== PWM访问完成 ==========
+            `MEM_PWM_ADDR: begin
+              status_r <= STATUS_DONE;
+              dram_done_r <= 1'b1;
+              if (dram_rd_r) begin
+                dram_data_rd_r <= pwm_reg_data_rd_i;
+              end
+              pwm_reg_wr_o <= 1'b0;
+              pwm_reg_rd_o <= 1'b0;
+            end
+            
+            // ========== 看门狗访问完成 ==========
+            `MEM_WATCHDOG_ADDR: begin
+              status_r <= STATUS_DONE;
+              dram_done_r <= 1'b1;
+              if (dram_rd_r) begin
+                dram_data_rd_r <= wdt_reg_data_rd_i;
+              end
+              wdt_reg_wr_o <= 1'b0;
+              wdt_reg_rd_o <= 1'b0;
+            end
 
             `MEM_RAM_ADDR: begin  // ram
               status_r <= STATUS_WAIT;
@@ -358,6 +428,10 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
           uart_tx_enable_r <= 1'b0;
           dram_done_r <= 1'b0;
           keyboard_rd_o <= 1'b0;  // 清除键盘读取信号
+          pwm_reg_wr_o <= 1'b0;
+          pwm_reg_rd_o <= 1'b0;
+          wdt_reg_wr_o <= 1'b0;
+          wdt_reg_rd_o <= 1'b0;
         end
 
         default: ;

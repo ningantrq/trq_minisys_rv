@@ -73,7 +73,17 @@ module minisys_soc (
 
     // segment display - 七段数码管显示接口
     output [7:0] seg_an_o,    // 数码管片选信号
-    output [7:0] seg_out_o    // 数码管段选信号
+    output [7:0] seg_out_o,   // 数码管段选信号
+    
+    // pwm - PWM输出接口
+    output pwm0_o,            // PWM通道0输出
+    output pwm1_o,            // PWM通道1输出
+    output pwm2_o,            // PWM通道2输出
+    output pwm3_o,            // PWM通道3输出
+    
+    // watchdog - 看门狗输出接口
+    output wdt_interrupt_o,   // 看门狗中断输出
+    output wdt_reset_o        // 看门狗复位输出
 );
   wire clk_w;
 
@@ -223,6 +233,20 @@ module minisys_soc (
       // segment display - 连接数码管外设的写入接口
       .seg_wr_o  (seg_wr_w),    // 输出写使能到数码管模块
       .seg_data_o(seg_data_w),  // 输出显示数据到数码管模块
+      
+      // pwm - 连接PWM外设的寄存器接口
+      .pwm_reg_wr_o(pwm_reg_wr_w),
+      .pwm_reg_rd_o(pwm_reg_rd_w),
+      .pwm_reg_addr_o(pwm_reg_addr_w),
+      .pwm_reg_data_wr_o(pwm_reg_data_wr_w),
+      .pwm_reg_data_rd_i(pwm_reg_data_rd_w),
+      
+      // watchdog - 连接看门狗外设的寄存器接口
+      .wdt_reg_wr_o(wdt_reg_wr_w),
+      .wdt_reg_rd_o(wdt_reg_rd_w),
+      .wdt_reg_addr_o(wdt_reg_addr_w),
+      .wdt_reg_data_wr_o(wdt_reg_data_wr_w),
+      .wdt_reg_data_rd_i(wdt_reg_data_rd_w),
 
       // ram
       .ram_data_rd_i(ram_data_rd_w),
@@ -342,6 +366,20 @@ module minisys_soc (
   // 数码管显示外设信号
   wire        seg_wr_w;        // 数码管写使能信号（来自peri_bridge）
   wire [31:0] seg_data_w;      // 数码管显示数据（8个4位BCD码，来自peri_bridge）
+  
+  // PWM外设信号
+  wire        pwm_reg_wr_w;    // PWM寄存器写使能
+  wire        pwm_reg_rd_w;    // PWM寄存器读使能
+  wire [31:0] pwm_reg_addr_w;  // PWM寄存器地址
+  wire [31:0] pwm_reg_data_wr_w; // PWM寄存器写数据
+  wire [31:0] pwm_reg_data_rd_w; // PWM寄存器读数据
+  
+  // 看门狗外设信号
+  wire        wdt_reg_wr_w;    // 看门狗寄存器写使能
+  wire        wdt_reg_rd_w;    // 看门狗寄存器读使能
+  wire [31:0] wdt_reg_addr_w;  // 看门狗寄存器地址
+  wire [31:0] wdt_reg_data_wr_w; // 看门狗寄存器写数据
+  wire [31:0] wdt_reg_data_rd_w; // 看门狗寄存器读数据
 
   peri_switch switch (
       .idx_i(switch_idx_w),
@@ -407,6 +445,53 @@ module minisys_soc (
       .seg_an_o(seg_an_o),     // 连接到物理数码管的片选信号
       .seg_out_o(seg_out_o)    // 连接到物理数码管的段选信号
   );
+  
+  // ========================================================================
+  // PWM外设实例化
+  // ========================================================================
+  // 功能：4通道PWM信号生成
+  // 内存映射地址：0x70000000
+  // 寄存器：周期、占空比、控制、状态
+  peri_pwm #(
+      .CLK_FREQ(25000000)      // 25MHz时钟频率
+  ) pwm (
+      .clk_i(clk_w),
+      .rst_i(rst_i),
+      
+      .reg_addr_i(pwm_reg_addr_w),
+      .reg_wr_i(pwm_reg_wr_w),
+      .reg_rd_i(pwm_reg_rd_w),
+      .reg_data_wr_i(pwm_reg_data_wr_w),
+      .reg_data_rd_o(pwm_reg_data_rd_w),
+      
+      .pwm0_o(pwm0_o),
+      .pwm1_o(pwm1_o),
+      .pwm2_o(pwm2_o),
+      .pwm3_o(pwm3_o)
+  );
+  
+  // ========================================================================
+  // 看门狗外设实例化
+  // ========================================================================
+  // 功能：系统看门狗定时器
+  // 内存映射地址：0x90000000
+  // 寄存器：超时时间、控制、状态、复位
+  peri_watchdog #(
+      .CLK_FREQ(25000000)      // 25MHz时钟频率
+  ) watchdog (
+      .clk_i(clk_w),
+      .rst_i(rst_i),
+      
+      .reg_addr_i(wdt_reg_addr_w),
+      .reg_wr_i(wdt_reg_wr_w),
+      .reg_rd_i(wdt_reg_rd_w),
+      .reg_data_wr_i(wdt_reg_data_wr_w),
+      .reg_data_rd_o(wdt_reg_data_rd_w),
+      
+      .wdt_interrupt_o(wdt_interrupt_o),
+      .wdt_reset_o(wdt_reset_o)
+  );
+
 
   peri_vga vga (
       .clk_i     (clk_i),
