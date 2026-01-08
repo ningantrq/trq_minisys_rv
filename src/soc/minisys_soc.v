@@ -73,17 +73,7 @@ module minisys_soc (
 
     // segment display - 七段数码管显示接口
     output [7:0] seg_an_o,    // 数码管片选信号
-    output [7:0] seg_out_o,   // 数码管段选信号
-    
-    // pwm - PWM输出接口
-    output pwm0_o,            // PWM通道0输出
-    output pwm1_o,            // PWM通道1输出
-    output pwm2_o,            // PWM通道2输出
-    output pwm3_o,            // PWM通道3输出
-    
-    // watchdog - 看门狗输出接口
-    output wdt_interrupt_o,   // 看门狗中断输出
-    output wdt_reset_o        // 看门狗复位输出
+    output [7:0] seg_out_o    // 数码管段选信号
 );
   wire clk_w;
 
@@ -380,6 +370,14 @@ module minisys_soc (
   wire [31:0] wdt_reg_addr_w;  // 看门狗寄存器地址
   wire [31:0] wdt_reg_data_wr_w; // 看门狗寄存器写数据
   wire [31:0] wdt_reg_data_rd_w; // 看门狗寄存器读数据
+  
+  // PWM和看门狗的内部输出信号（不再输出到顶层）
+  wire pwm0_w;                 // PWM通道0内部信号
+  wire pwm1_w;                 // PWM通道1内部信号
+  wire pwm2_w;                 // PWM通道2内部信号
+  wire pwm3_w;                 // PWM通道3内部信号
+  wire wdt_interrupt_w;        // 看门狗中断内部信号
+  wire wdt_reset_w;            // 看门狗复位内部信号
 
   peri_switch switch (
       .idx_i(switch_idx_w),
@@ -464,10 +462,10 @@ module minisys_soc (
       .reg_data_wr_i(pwm_reg_data_wr_w),
       .reg_data_rd_o(pwm_reg_data_rd_w),
       
-      .pwm0_o(pwm0_o),
-      .pwm1_o(pwm1_o),
-      .pwm2_o(pwm2_o),
-      .pwm3_o(pwm3_o)
+      .pwm0_o(pwm0_w),
+      .pwm1_o(pwm1_w),
+      .pwm2_o(pwm2_w),
+      .pwm3_o(pwm3_w)
   );
   
   // ========================================================================
@@ -488,8 +486,8 @@ module minisys_soc (
       .reg_data_wr_i(wdt_reg_data_wr_w),
       .reg_data_rd_o(wdt_reg_data_rd_w),
       
-      .wdt_interrupt_o(wdt_interrupt_o),
-      .wdt_reset_o(wdt_reset_o)
+      .wdt_interrupt_o(wdt_interrupt_w),
+      .wdt_reset_o(wdt_reset_w)
   );
 
 
