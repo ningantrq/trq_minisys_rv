@@ -45,6 +45,25 @@ module peri_bridge (
     output [31:0] dram_data_rd_o,   // 读数据
     output        dram_done_o,      // 完成标志
 
+    // ========== AXI4-Lite Master 接口 (必须要有这部分) ==========
+    output reg [31:0] m_axi_awaddr_o,
+    output reg        m_axi_awvalid_o,
+    input             m_axi_awready_i,
+    output reg [31:0] m_axi_wdata_o,
+    output reg [3:0]  m_axi_wstrb_o,
+    output reg        m_axi_wvalid_o,
+    input             m_axi_wready_i,
+    input      [1:0]  m_axi_bresp_i,
+    input             m_axi_bvalid_i,
+    output reg        m_axi_bready_o,
+    output reg [31:0] m_axi_araddr_o,
+    output reg        m_axi_arvalid_o,
+    input             m_axi_arready_i,
+    input      [31:0] m_axi_rdata_i,
+    input      [1:0]  m_axi_rresp_i,
+    input             m_axi_rvalid_i,
+    output reg        m_axi_rready_o,
+
     // ========== UART接口 ==========
     output       tx_enable_o,       // 发送使能
     output [7:0] tx_data_o,         // 发送数据
@@ -93,16 +112,6 @@ module peri_bridge (
     output reg        seg_wr_o,          // 数码管写使能
     output reg [31:0] seg_data_o,        // 数码管显示数据（8个4位BCD码）
 
-    // ========== RAM接口 ==========
-    input      [31:0] ram_data_rd_i,    // RAM读数据
-    input             ram_done_i,       // RAM完成
-    output reg        ram_enable_o,     // RAM使能
-    output reg        ram_wr_o,         // RAM写使能
-    output reg        ram_rd_o,         // RAM读使能
-    output reg [31:0] ram_addr_o,       // RAM地址
-    output reg [31:0] ram_data_wr_o,    // RAM写数据
-    output reg [31:0] ram_mask_wr_o,     // RAM写掩码
-
     // ========== PWM接口 ==========    
     output reg        pwm_reg_wr_o,      // PWM寄存器写使能
     output reg        pwm_reg_rd_o,      // PWM寄存器读使能
@@ -125,12 +134,14 @@ reg [31:0] uart_rx_data_r;   // 接收数据缓冲
 reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
 
   // bridge
-  localparam STATUS_IDLE = 2'b00;
-  localparam STATUS_INIT = 2'b01;
-  localparam STATUS_WAIT = 2'b10;
-  localparam STATUS_DONE = 2'b11;
+  localparam STATUS_IDLE = 3'b000;
+  localparam STATUS_INIT = 3'b001;
+  localparam STATUS_WAIT = 3'b010;
+  localparam STATUS_DONE = 3'b011;
+  localparam STATUS_AXI_WRITE = 3'b100;
+  localparam STATUS_AXI_READ  = 3'b101;
 
-  reg [ 1:0] status_r;
+  reg [ 2:0] status_r;
 
   reg        dram_rd_r;
   reg        dram_wr_r;
@@ -145,6 +156,13 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
   assign dram_done_o    = dram_done_r;
   assign tx_enable_o    = uart_tx_enable_r;
   assign tx_data_o      = uart_tx_data_r;
+
+function [3:0] gen_wstrb;
+      input [31:0] mask;
+      begin
+          gen_wstrb = {mask[24], mask[16], mask[8], mask[0]};
+      end
+  endfunction
 
   always @(posedge clk_i or posedge rst_i) begin
     if (rst_i) begin
@@ -164,6 +182,17 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
 
       timer_timecmp_o  <= 32'hffffffff;
       timer_timecmph_o <= 32'hffffffff;
+
+      m_axi_awvalid_o <= 0;
+      m_axi_wvalid_o  <= 0;
+      m_axi_bready_o  <= 0;
+      m_axi_arvalid_o <= 0;
+      m_axi_rready_o  <= 0;
+      m_axi_awaddr_o  <= 0;
+      m_axi_wdata_o   <= 0;
+      m_axi_wstrb_o   <= 0;
+      m_axi_araddr_o  <= 0;
+
       keyboard_rd_o    <= 1'b0;
       
       pwm_reg_wr_o     <= 1'b0;
@@ -199,6 +228,23 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
         STATUS_INIT: begin
           status_r <= STATUS_WAIT;
           case (dram_addr_r & `MEM_RAM_MASK)// 根据高4位判断外设
+          // ========== RAM访问 ==========
+            `MEM_RAM_ADDR: begin
+               if (dram_wr_r) begin
+                 m_axi_awaddr_o  <= dram_addr_r;
+                 m_axi_awvalid_o <= 1'b1;
+                 m_axi_wdata_o   <= dram_data_wr_r;
+                 m_axi_wstrb_o   <= gen_wstrb(dram_mask_wr_r);
+                 m_axi_wvalid_o  <= 1'b1;
+                 m_axi_bready_o  <= 1'b1;
+                 status_r        <= STATUS_AXI_WRITE;
+               end else begin
+                 m_axi_araddr_o  <= dram_addr_r;
+                 m_axi_arvalid_o <= 1'b1;
+                 m_axi_rready_o  <= 1'b1;
+                 status_r        <= STATUS_AXI_READ;
+               end
+            end
 
           // ========== UART访问 ==========
             `MEM_UART_ADDR: begin
@@ -303,17 +349,6 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               seg_data_o  <= dram_data_wr_r;   // 传递32位数据（8个BCD码）
             end
 
-            // ========== RAM访问 ==========
-            `MEM_RAM_ADDR: begin  // ram
-              status_r      <= STATUS_WAIT;
-              ram_enable_o  <= 1'b1;
-              ram_wr_o      <= dram_wr_r;
-              ram_rd_o      <= dram_rd_r;
-              ram_addr_o    <= {4'h0, dram_addr_r[27:0]};
-              ram_data_wr_o <= dram_data_wr_r;
-              ram_mask_wr_o <= dram_mask_wr_r;
-            end
-
             // ========== PWM访问 ==========
             `MEM_PWM_ADDR: begin
               status_r <= STATUS_WAIT;
@@ -338,6 +373,25 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
 
             default: status_r <= STATUS_DONE;
           endcase
+        end
+
+        STATUS_AXI_WRITE: begin
+          if (m_axi_awready_i) m_axi_awvalid_o <= 0;
+          if (m_axi_wready_i)  m_axi_wvalid_o  <= 0;
+          if (m_axi_bvalid_i) begin
+            m_axi_bready_o <= 0;
+            dram_done_r    <= 1'b1;
+            status_r       <= STATUS_DONE;
+          end
+        end
+        STATUS_AXI_READ: begin
+          if (m_axi_arready_i) m_axi_arvalid_o <= 0;
+          if (m_axi_rvalid_i) begin
+            dram_data_rd_r <= m_axi_rdata_i;
+            m_axi_rready_o <= 0;
+            dram_done_r    <= 1'b1;
+            status_r       <= STATUS_DONE;
+          end
         end
 
         STATUS_WAIT: begin
@@ -408,16 +462,6 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               end
               wdt_reg_wr_o <= 1'b0;
               wdt_reg_rd_o <= 1'b0;
-            end
-
-            `MEM_RAM_ADDR: begin  // ram
-              status_r <= STATUS_WAIT;
-              ram_enable_o <= 1'b0;
-              if (ram_done_i) begin
-                status_r       <= STATUS_DONE;
-                dram_data_rd_r <= ram_data_rd_i;
-                dram_done_r    <= 1'b1;
-              end
             end
             default: status_r <= STATUS_DONE;
           endcase

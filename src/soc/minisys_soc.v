@@ -151,15 +151,31 @@ module minisys_soc (
   wire [31:0] vram_data_wr_w;
   wire [31:0] vram_mask_wr_w;
 
-  // ram
-  wire [31:0] ram_data_rd_w;
-  wire        ram_done_w;
-  wire        ram_enable_w;
-  wire        ram_wr_w;
-  wire        ram_rd_w;
-  wire [31:0] ram_addr_w;
-  wire [31:0] ram_data_wr_w;
-  wire [31:0] ram_mask_wr_w;
+  // =========================================================================
+  // NEW: AXI Interconnect Signals (用于连接 Bridge 和 RAM)
+  // =========================================================================
+  // Write Address Channel
+  wire [31:0] axi_awaddr_w;
+  wire        axi_awvalid_w;
+  wire        axi_awready_w;
+  // Write Data Channel
+  wire [31:0] axi_wdata_w;
+  wire [ 3:0] axi_wstrb_w;
+  wire        axi_wvalid_w;
+  wire        axi_wready_w;
+  // Write Response Channel
+  wire [ 1:0] axi_bresp_w;
+  wire        axi_bvalid_w;
+  wire        axi_bready_w;
+  // Read Address Channel
+  wire [31:0] axi_araddr_w;
+  wire        axi_arvalid_w;
+  wire        axi_arready_w;
+  // Read Data Channel
+  wire [31:0] axi_rdata_w;
+  wire [ 1:0] axi_rresp_w;
+  wire        axi_rvalid_w;
+  wire        axi_rready_w;
 
   peri_bridge bridge (
       .clk_i(clk_w),
@@ -174,6 +190,30 @@ module minisys_soc (
 
       .dram_data_rd_o(dram_data_rd_w),
       .dram_done_o   (dram_done_w),
+
+            // ========== AXI Master Interface (连接到 RAM) ==========
+      .m_axi_awaddr_o (axi_awaddr_w),
+      .m_axi_awvalid_o(axi_awvalid_w),
+      .m_axi_awready_i(axi_awready_w),
+
+      .m_axi_wdata_o  (axi_wdata_w),
+      .m_axi_wstrb_o  (axi_wstrb_w),
+      .m_axi_wvalid_o (axi_wvalid_w),
+      .m_axi_wready_i (axi_wready_w),
+
+      .m_axi_bresp_i  (axi_bresp_w),
+      .m_axi_bvalid_i (axi_bvalid_w),
+      .m_axi_bready_o (axi_bready_w),
+
+      .m_axi_araddr_o (axi_araddr_w),
+      .m_axi_arvalid_o(axi_arvalid_w),
+      .m_axi_arready_i(axi_arready_w),
+
+      .m_axi_rdata_i  (axi_rdata_w),
+      .m_axi_rresp_i  (axi_rresp_w),
+      .m_axi_rvalid_i (axi_rvalid_w),
+      .m_axi_rready_o (axi_rready_w),
+      // =====================================================
 
       // timer
       .timer_cycle_i(timer_cycle_w),
@@ -236,17 +276,7 @@ module minisys_soc (
       .wdt_reg_rd_o(wdt_reg_rd_w),
       .wdt_reg_addr_o(wdt_reg_addr_w),
       .wdt_reg_data_wr_o(wdt_reg_data_wr_w),
-      .wdt_reg_data_rd_i(wdt_reg_data_rd_w),
-
-      // ram
-      .ram_data_rd_i(ram_data_rd_w),
-      .ram_done_i   (ram_done_w),
-      .ram_enable_o (ram_enable_w),
-      .ram_wr_o     (ram_wr_w),
-      .ram_rd_o     (ram_rd_w),
-      .ram_addr_o   (ram_addr_w),
-      .ram_data_wr_o(ram_data_wr_w),
-      .ram_mask_wr_o(ram_mask_wr_w)
+      .wdt_reg_data_rd_i(wdt_reg_data_rd_w)
   );
 
   peri_uart uart (
@@ -514,13 +544,29 @@ module minisys_soc (
       .iram_done_o   (iram_done_w),
       .iram_enable_i (iram_enable_w),
       .iram_addr_i   ({4'h0, iram_addr_w[27:0]}),
-      .dram_data_rd_o(ram_data_rd_w),
-      .dram_done_o   (ram_done_w),
-      .dram_enable_i (ram_enable_w),
-      .dram_wr_i     (ram_wr_w),
-      .dram_rd_i     (ram_rd_w),
-      .dram_addr_i   (ram_addr_w),
-      .dram_data_wr_i(ram_data_wr_w),
-      .dram_mask_wr_i(ram_mask_wr_w)
+
+      // ========== AXI Slave Interface (来自 Bridge) ==========
+      .s_axi_awaddr_i (axi_awaddr_w),
+      .s_axi_awvalid_i(axi_awvalid_w),
+      .s_axi_awready_o(axi_awready_w),
+
+      .s_axi_wdata_i  (axi_wdata_w),
+      .s_axi_wstrb_i  (axi_wstrb_w),
+      .s_axi_wvalid_i (axi_wvalid_w),
+      .s_axi_wready_o (axi_wready_w),
+
+      .s_axi_bresp_o  (axi_bresp_w),
+      .s_axi_bvalid_o (axi_bvalid_w),
+      .s_axi_bready_i (axi_bready_w),
+
+      .s_axi_araddr_i (axi_araddr_w),
+      .s_axi_arvalid_i(axi_arvalid_w),
+      .s_axi_arready_o(axi_arready_w),
+
+      .s_axi_rdata_o  (axi_rdata_w),
+      .s_axi_rresp_o  (axi_rresp_w),
+      .s_axi_rvalid_o (axi_rvalid_w),
+      .s_axi_rready_i (axi_rready_w)
+      // =====================================================
   );
 endmodule
