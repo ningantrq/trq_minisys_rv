@@ -60,13 +60,6 @@ module minisys_soc (
     input sw22_i,
     input sw23_i,
 
-    // vga
-    output [3:0] red_o,
-    output [3:0] green_o,
-    output [3:0] blue_o,
-    output       h_sync_o,
-    output       v_sync_o,
-
     // keyboard - 4x4矩阵键盘接口
     input  [3:0] key_row_i,   // 键盘行输入（连接到键盘行线）
     output [3:0] key_col_o,   // 键盘列输出（用于扫描）
@@ -139,17 +132,6 @@ module minisys_soc (
   wire [31:0] timer_timecmph_wr_w;
 
   wire        timer_interrupt_w;
-
-  // vram
-  wire [31:0] vram_data_rd_w;
-  wire        vram_done_w;
-
-  wire        vram_enable_w;
-  wire        vram_wr_w;
-  wire        vram_rd_w;
-  wire [31:0] vram_addr_w;
-  wire [31:0] vram_data_wr_w;
-  wire [31:0] vram_mask_wr_w;
 
   // =========================================================================
   // NEW: AXI Interconnect Signals (用于连接 Bridge 和 RAM)
@@ -234,17 +216,6 @@ module minisys_soc (
       .rx_data_i(rx_data_w),
       .tx_done_i(tx_done_w),
 
-      // vram
-      .vram_data_rd_i(vram_data_rd_w),
-      .vram_done_i   (vram_done_w),
-
-      .vram_enable_o (vram_enable_w),
-      .vram_wr_o     (vram_wr_w),
-      .vram_rd_o     (vram_rd_w),
-      .vram_addr_o   (vram_addr_w),
-      .vram_data_wr_o(vram_data_wr_w),
-      .vram_mask_wr_o(vram_mask_wr_w),
-
       // led
       .led_idx_o      (led_idx_w),
       .led_wr_o       (led_wr_w),
@@ -309,30 +280,6 @@ module minisys_soc (
       .timer_interrupt_o(timer_interrupt_w)
   );
 
-  wire        vga_clk_w;
-  wire [ 9:0] vga_h_addr_w;
-  wire [ 9:0] vga_v_addr_w;
-  wire [11:0] vga_data_w;
-
-  peri_vram vram (
-      .clk_i(clk_w),
-      .rst_i(rst_i),
-
-      .vram_data_rd_o(vram_data_rd_w),
-      .vram_done_o   (vram_done_w),
-
-      .vram_enable_i (vram_enable_w),
-      .vram_wr_i     (vram_wr_w),
-      .vram_rd_i     (vram_rd_w),
-      .vram_addr_i   (vram_addr_w),
-      .vram_data_wr_i(vram_data_wr_w),
-      .vram_mask_wr_i(vram_mask_wr_w),
-
-      .vga_clk_i   (vga_clk_w),
-      .vga_h_addr_i(vga_h_addr_w),
-      .vga_v_addr_i(vga_v_addr_w),
-      .vga_data_o  (vga_data_w)
-  );
 
   wire [4:0] led_idx_w;
   wire       led_wr_w;
@@ -518,22 +465,6 @@ module minisys_soc (
       
       .wdt_interrupt_o(wdt_interrupt_w),
       .wdt_reset_o(wdt_reset_w)
-  );
-
-
-  peri_vga vga (
-      .clk_i     (clk_i),
-      .rst_i     (rst_i),
-      .vga_data_i(vga_data_w),
-
-      .vga_clk_o(vga_clk_w),
-      .h_addr_o (vga_h_addr_w),
-      .v_addr_o (vga_v_addr_w),
-      .red_o    (red_o),
-      .green_o  (green_o),
-      .blue_o   (blue_o),
-      .h_sync_o (h_sync_o),
-      .v_sync_o (v_sync_o)
   );
 
   peri_ram ram (

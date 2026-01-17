@@ -16,8 +16,6 @@
 `define MEM_TIMER_TIMECMP   32'h10000010// 比较值低32位
 `define MEM_TIMER_TIMECMPH  32'h10000014// 比较值高32位
 
-
-`define MEM_VRAM_ADDR       32'h20000000
 `define MEM_LED_ADDR        32'h30000000
 `define MEM_SWITCH_ADDR     32'h40000000
 `define MEM_KEYBOARD_ADDR   32'h50000000  // 键盘外设基地址（只读，返回4位键值）
@@ -80,16 +78,6 @@ module peri_bridge (
     input  [31:0] timer_timecmph_i,
     output reg [31:0] timer_timecmp_o,  // 写入比较值
     output reg [31:0] timer_timecmph_o,
-
-    // ========== VRAM接口 ==========
-    input  [31:0] vram_data_rd_i,   // 从VRAM读取的数据
-    input         vram_done_i,      // VRAM操作完成
-    output reg        vram_enable_o,    // VRAM使能
-    output reg        vram_wr_o,        // VRAM写使能
-    output reg        vram_rd_o,        // VRAM读使能
-    output reg [31:0] vram_addr_o,      // VRAM地址
-    output reg [31:0] vram_data_wr_o,   // VRAM写数据
-    output reg [31:0] vram_mask_wr_o,   // VRAM写掩码
 
     // ========== LED接口 ==========
     output reg [4:0] led_idx_o,         // LED索引
@@ -306,18 +294,6 @@ function [3:0] gen_wstrb;
               end
             end
 
-        // ========== VRAM访问 ==========
-            `MEM_VRAM_ADDR: begin
-              // VRAM需要多周期访问
-              status_r       <= STATUS_WAIT;
-              vram_enable_o  <= 1'b1;
-              vram_wr_o      <= dram_wr_r;
-              vram_rd_o      <= dram_rd_r;
-              vram_addr_o    <= {4'h0, dram_addr_r[27:0]};
-              vram_data_wr_o <= dram_data_wr_r;
-              vram_mask_wr_o <= dram_mask_wr_r;
-            end
-
             // ========== LED访问 ==========
             `MEM_LED_ADDR: begin
               status_r        <= STATUS_WAIT;
@@ -396,15 +372,6 @@ function [3:0] gen_wstrb;
 
         STATUS_WAIT: begin
           case (dram_addr_r & `MEM_RAM_MASK)
-            `MEM_VRAM_ADDR: begin  // vram
-              status_r <= STATUS_WAIT;
-              vram_enable_o <= 1'b0;
-              if (vram_done_i) begin
-                status_r       <= STATUS_DONE;
-                dram_data_rd_r <= vram_data_rd_i;
-                dram_done_r    <= 1'b1;
-              end
-            end
 
             `MEM_LED_ADDR: begin  // led
               status_r    <= STATUS_DONE;
