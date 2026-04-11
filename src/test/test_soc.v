@@ -4,13 +4,15 @@ module test_soc;
   reg        clk;
   reg        rst;
 
+  // UART接口
   reg        uart_tx_enable;
   reg  [7:0] uart_tx_data;
-  wire       uart_tx_wire;
+  wire       uart_tx_wire;// 外部UART发送器输出
 
   reg        rx;
-  wire       tx;
+  wire       tx;// SOC的UART发送输出
 
+ // VGA接口
   wire [3:0] red;
   wire [3:0] green;
   wire [3:0] blue;
@@ -33,6 +35,7 @@ module test_soc;
       .v_sync_o(v_sync)
   );
 
+// 用于向SOC发送UART数据
   peri_uart_tx uart_tx (
       .clk_i(clk),
       .rst_i(rst),
@@ -46,8 +49,8 @@ module test_soc;
   always #5 clk = ~clk;
   initial begin
     fd = $fopen("reg.log", "w");
-    $dumpfile("tb_minisys_soc.vcd");
-    $dumpvars(0, tb_minisys_soc);
+    $dumpfile("test_soc.vcd");
+    $dumpvars(0, test_soc);
 
     clk = 1'b0;
     rst = 1'b1;
@@ -57,9 +60,9 @@ module test_soc;
 
     #15 rst = 1'b0;
 
-    // #100000;
-    // uart_tx_enable = 1;
-    // #10 uart_tx_enable = 0;
+     #100000;
+     uart_tx_enable = 1;
+     #10 uart_tx_enable = 0;
 
     #100000000;
     $fclose(fd);

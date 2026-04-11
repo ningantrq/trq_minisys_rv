@@ -60,12 +60,13 @@ module minisys_soc (
     input sw22_i,
     input sw23_i,
 
-    // vga
-    output [3:0] red_o,
-    output [3:0] green_o,
-    output [3:0] blue_o,
-    output       h_sync_o,
-    output       v_sync_o
+    // keyboard - 4x4矩阵键盘接口
+    input  [3:0] key_row_i,   // 键盘行输入（连接到键盘行线）
+    output [3:0] key_col_o,   // 键盘列输出（用于扫描）
+
+    // segment display - 七段数码管显示接口
+    output [7:0] seg_an_o,    // 数码管片选信号
+    output [7:0] seg_out_o    // 数码管段选信号
 );
   wire clk_w;
 
@@ -132,26 +133,31 @@ module minisys_soc (
 
   wire        timer_interrupt_w;
 
-  // vram
-  wire [31:0] vram_data_rd_w;
-  wire        vram_done_w;
-
-  wire        vram_enable_w;
-  wire        vram_wr_w;
-  wire        vram_rd_w;
-  wire [31:0] vram_addr_w;
-  wire [31:0] vram_data_wr_w;
-  wire [31:0] vram_mask_wr_w;
-
-  // ram
-  wire [31:0] ram_data_rd_w;
-  wire        ram_done_w;
-  wire        ram_enable_w;
-  wire        ram_wr_w;
-  wire        ram_rd_w;
-  wire [31:0] ram_addr_w;
-  wire [31:0] ram_data_wr_w;
-  wire [31:0] ram_mask_wr_w;
+  // =========================================================================
+  // NEW: AXI Interconnect Signals (用于连接 Bridge 和 RAM)
+  // =========================================================================
+  // Write Address Channel
+  wire [31:0] axi_awaddr_w;
+  wire        axi_awvalid_w;
+  wire        axi_awready_w;
+  // Write Data Channel
+  wire [31:0] axi_wdata_w;
+  wire [ 3:0] axi_wstrb_w;
+  wire        axi_wvalid_w;
+  wire        axi_wready_w;
+  // Write Response Channel
+  wire [ 1:0] axi_bresp_w;
+  wire        axi_bvalid_w;
+  wire        axi_bready_w;
+  // Read Address Channel
+  wire [31:0] axi_araddr_w;
+  wire        axi_arvalid_w;
+  wire        axi_arready_w;
+  // Read Data Channel
+  wire [31:0] axi_rdata_w;
+  wire [ 1:0] axi_rresp_w;
+  wire        axi_rvalid_w;
+  wire        axi_rready_w;
 
   peri_bridge bridge (
       .clk_i(clk_w),
@@ -166,6 +172,30 @@ module minisys_soc (
 
       .dram_data_rd_o(dram_data_rd_w),
       .dram_done_o   (dram_done_w),
+
+            // ========== AXI Master Interface (连接到 RAM) ==========
+      .m_axi_awaddr_o (axi_awaddr_w),
+      .m_axi_awvalid_o(axi_awvalid_w),
+      .m_axi_awready_i(axi_awready_w),
+
+      .m_axi_wdata_o  (axi_wdata_w),
+      .m_axi_wstrb_o  (axi_wstrb_w),
+      .m_axi_wvalid_o (axi_wvalid_w),
+      .m_axi_wready_i (axi_wready_w),
+
+      .m_axi_bresp_i  (axi_bresp_w),
+      .m_axi_bvalid_i (axi_bvalid_w),
+      .m_axi_bready_o (axi_bready_w),
+
+      .m_axi_araddr_o (axi_araddr_w),
+      .m_axi_arvalid_o(axi_arvalid_w),
+      .m_axi_arready_i(axi_arready_w),
+
+      .m_axi_rdata_i  (axi_rdata_w),
+      .m_axi_rresp_i  (axi_rresp_w),
+      .m_axi_rvalid_i (axi_rvalid_w),
+      .m_axi_rready_o (axi_rready_w),
+      // =====================================================
 
       // timer
       .timer_cycle_i(timer_cycle_w),
@@ -186,17 +216,6 @@ module minisys_soc (
       .rx_data_i(rx_data_w),
       .tx_done_i(tx_done_w),
 
-      // vram
-      .vram_data_rd_i(vram_data_rd_w),
-      .vram_done_i   (vram_done_w),
-
-      .vram_enable_o (vram_enable_w),
-      .vram_wr_o     (vram_wr_w),
-      .vram_rd_o     (vram_rd_w),
-      .vram_addr_o   (vram_addr_w),
-      .vram_data_wr_o(vram_data_wr_w),
-      .vram_mask_wr_o(vram_mask_wr_w),
-
       // led
       .led_idx_o      (led_idx_w),
       .led_wr_o       (led_wr_w),
@@ -207,15 +226,28 @@ module minisys_soc (
       .switch_idx_o   (switch_idx_w),
       .switch_status_i(switch_status_w),
 
-      // ram
-      .ram_data_rd_i(ram_data_rd_w),
-      .ram_done_i   (ram_done_w),
-      .ram_enable_o (ram_enable_w),
-      .ram_wr_o     (ram_wr_w),
-      .ram_rd_o     (ram_rd_w),
-      .ram_addr_o   (ram_addr_w),
-      .ram_data_wr_o(ram_data_wr_w),
-      .ram_mask_wr_o(ram_mask_wr_w)
+      // keyboard - 连接键盘外设的读取接口（程序查询方式）
+      .keyboard_val_i(keyboard_val_w),    // 从键盘模块读取当前按键值
+      .keyboard_ready_i(keyboard_ready_w), // 从键盘模块读取就绪标志
+      .keyboard_rd_o(keyboard_rd_w),      // 发送读取信号到键盘模块
+
+      // segment display - 连接数码管外设的写入接口
+      .seg_wr_o  (seg_wr_w),    // 输出写使能到数码管模块
+      .seg_data_o(seg_data_w),  // 输出显示数据到数码管模块
+      
+      // pwm - 连接PWM外设的寄存器接口
+      .pwm_reg_wr_o(pwm_reg_wr_w),
+      .pwm_reg_rd_o(pwm_reg_rd_w),
+      .pwm_reg_addr_o(pwm_reg_addr_w),
+      .pwm_reg_data_wr_o(pwm_reg_data_wr_w),
+      .pwm_reg_data_rd_i(pwm_reg_data_rd_w),
+      
+      // watchdog - 连接看门狗外设的寄存器接口
+      .wdt_reg_wr_o(wdt_reg_wr_w),
+      .wdt_reg_rd_o(wdt_reg_rd_w),
+      .wdt_reg_addr_o(wdt_reg_addr_w),
+      .wdt_reg_data_wr_o(wdt_reg_data_wr_w),
+      .wdt_reg_data_rd_i(wdt_reg_data_rd_w)
   );
 
   peri_uart uart (
@@ -248,30 +280,6 @@ module minisys_soc (
       .timer_interrupt_o(timer_interrupt_w)
   );
 
-  wire        vga_clk_w;
-  wire [ 9:0] vga_h_addr_w;
-  wire [ 9:0] vga_v_addr_w;
-  wire [11:0] vga_data_w;
-
-  peri_vram vram (
-      .clk_i(clk_w),
-      .rst_i(rst_i),
-
-      .vram_data_rd_o(vram_data_rd_w),
-      .vram_done_o   (vram_done_w),
-
-      .vram_enable_i (vram_enable_w),
-      .vram_wr_i     (vram_wr_w),
-      .vram_rd_i     (vram_rd_w),
-      .vram_addr_i   (vram_addr_w),
-      .vram_data_wr_i(vram_data_wr_w),
-      .vram_mask_wr_i(vram_mask_wr_w),
-
-      .vga_clk_i   (vga_clk_w),
-      .vga_h_addr_i(vga_h_addr_w),
-      .vga_v_addr_i(vga_v_addr_w),
-      .vga_data_o  (vga_data_w)
-  );
 
   wire [4:0] led_idx_w;
   wire       led_wr_w;
@@ -317,6 +325,37 @@ module minisys_soc (
   wire [4:0] switch_idx_w;
   wire       switch_status_w;
 
+  // 键盘外设信号
+  wire [3:0] keyboard_val_w;      // 键盘按键值
+  wire       keyboard_ready_w;    // 键盘数据就绪标志
+  wire       keyboard_rd_w;       // 键盘读取信号
+
+  // 数码管显示外设信号
+  wire        seg_wr_w;        // 数码管写使能信号（来自peri_bridge）
+  wire [31:0] seg_data_w;      // 数码管显示数据（8个4位BCD码，来自peri_bridge）
+  
+  // PWM外设信号
+  wire        pwm_reg_wr_w;    // PWM寄存器写使能
+  wire        pwm_reg_rd_w;    // PWM寄存器读使能
+  wire [31:0] pwm_reg_addr_w;  // PWM寄存器地址
+  wire [31:0] pwm_reg_data_wr_w; // PWM寄存器写数据
+  wire [31:0] pwm_reg_data_rd_w; // PWM寄存器读数据
+  
+  // 看门狗外设信号
+  wire        wdt_reg_wr_w;    // 看门狗寄存器写使能
+  wire        wdt_reg_rd_w;    // 看门狗寄存器读使能
+  wire [31:0] wdt_reg_addr_w;  // 看门狗寄存器地址
+  wire [31:0] wdt_reg_data_wr_w; // 看门狗寄存器写数据
+  wire [31:0] wdt_reg_data_rd_w; // 看门狗寄存器读数据
+  
+  // PWM和看门狗的内部输出信号（不再输出到顶层）
+  wire pwm0_w;                 // PWM通道0内部信号
+  wire pwm1_w;                 // PWM通道1内部信号
+  wire pwm2_w;                 // PWM通道2内部信号
+  wire pwm3_w;                 // PWM通道3内部信号
+  wire wdt_interrupt_w;        // 看门狗中断内部信号
+  wire wdt_reset_w;            // 看门狗复位内部信号
+
   peri_switch switch (
       .idx_i(switch_idx_w),
       .status_o(switch_status_w),
@@ -347,19 +386,85 @@ module minisys_soc (
       .sw23_i(sw23_i)
   );
 
-  peri_vga vga (
-      .clk_i     (clk_i),
-      .rst_i     (rst_i),
-      .vga_data_i(vga_data_w),
+  // ========================================================================
+  // 键盘外设实例化
+  // ========================================================================
+  // 功能：4x4矩阵键盘扫描和译码
+  // 内存映射地址：0x50000000（只读）
+  // 返回值：4位BCD码（0-F），表示当前按下的按键
+  peri_keyboard keyboard (
+      .clk_i(clk_w),                // 系统时钟
+      .rst_i(rst_i),                // 复位信号
 
-      .vga_clk_o(vga_clk_w),
-      .h_addr_o (vga_h_addr_w),
-      .v_addr_o (vga_v_addr_w),
-      .red_o    (red_o),
-      .green_o  (green_o),
-      .blue_o   (blue_o),
-      .h_sync_o (h_sync_o),
-      .v_sync_o (v_sync_o)
+      .row_i(key_row_i),            // 连接到物理键盘的行输入
+      .col_o(key_col_o),            // 连接到物理键盘的列输出
+
+      .rd_i(keyboard_rd_w),         // 读取信号（来自peri_bridge）
+      .key_val_o(keyboard_val_w),   // 输出当前按键值到peri_bridge
+      .data_ready_o(keyboard_ready_w) // 输出数据就绪标志到peri_bridge
+  );
+
+  // ========================================================================
+  // 七段数码管显示外设实例化
+  // ========================================================================
+  // 功能：接收32位数据（8个4位BCD码），使用时分复用控制8个数码管显示不同内容
+  // 内存映射地址：0x60000000（只写）
+  // 写入值：32位数据，[3:0]对应数码管0，[31:28]对应数码管7
+  peri_seg seg (
+      .clk_i(clk_w),           // 系统时钟
+      .rst_i(rst_i),           // 复位信号
+
+      .wr_i(seg_wr_w),         // 写使能（来自peri_bridge）
+      .seg_data_i(seg_data_w), // 显示数据（来自peri_bridge）
+
+      .seg_an_o(seg_an_o),     // 连接到物理数码管的片选信号
+      .seg_out_o(seg_out_o)    // 连接到物理数码管的段选信号
+  );
+  
+  // ========================================================================
+  // PWM外设实例化
+  // ========================================================================
+  // 功能：4通道PWM信号生成
+  // 内存映射地址：0x70000000
+  // 寄存器：周期、占空比、控制、状态
+  peri_pwm #(
+      .CLK_FREQ(25000000)      // 25MHz时钟频率
+  ) pwm (
+      .clk_i(clk_w),
+      .rst_i(rst_i),
+      
+      .reg_addr_i(pwm_reg_addr_w),
+      .reg_wr_i(pwm_reg_wr_w),
+      .reg_rd_i(pwm_reg_rd_w),
+      .reg_data_wr_i(pwm_reg_data_wr_w),
+      .reg_data_rd_o(pwm_reg_data_rd_w),
+      
+      .pwm0_o(pwm0_w),
+      .pwm1_o(pwm1_w),
+      .pwm2_o(pwm2_w),
+      .pwm3_o(pwm3_w)
+  );
+  
+  // ========================================================================
+  // 看门狗外设实例化
+  // ========================================================================
+  // 功能：系统看门狗定时器
+  // 内存映射地址：0x90000000
+  // 寄存器：超时时间、控制、状态、复位
+  peri_watchdog #(
+      .CLK_FREQ(25000000)      // 25MHz时钟频率
+  ) watchdog (
+      .clk_i(clk_w),
+      .rst_i(rst_i),
+      
+      .reg_addr_i(wdt_reg_addr_w),
+      .reg_wr_i(wdt_reg_wr_w),
+      .reg_rd_i(wdt_reg_rd_w),
+      .reg_data_wr_i(wdt_reg_data_wr_w),
+      .reg_data_rd_o(wdt_reg_data_rd_w),
+      
+      .wdt_interrupt_o(wdt_interrupt_w),
+      .wdt_reset_o(wdt_reset_w)
   );
 
   peri_ram ram (
@@ -370,13 +475,29 @@ module minisys_soc (
       .iram_done_o   (iram_done_w),
       .iram_enable_i (iram_enable_w),
       .iram_addr_i   ({4'h0, iram_addr_w[27:0]}),
-      .dram_data_rd_o(ram_data_rd_w),
-      .dram_done_o   (ram_done_w),
-      .dram_enable_i (ram_enable_w),
-      .dram_wr_i     (ram_wr_w),
-      .dram_rd_i     (ram_rd_w),
-      .dram_addr_i   (ram_addr_w),
-      .dram_data_wr_i(ram_data_wr_w),
-      .dram_mask_wr_i(ram_mask_wr_w)
+
+      // ========== AXI Slave Interface (来自 Bridge) ==========
+      .s_axi_awaddr_i (axi_awaddr_w),
+      .s_axi_awvalid_i(axi_awvalid_w),
+      .s_axi_awready_o(axi_awready_w),
+
+      .s_axi_wdata_i  (axi_wdata_w),
+      .s_axi_wstrb_i  (axi_wstrb_w),
+      .s_axi_wvalid_i (axi_wvalid_w),
+      .s_axi_wready_o (axi_wready_w),
+
+      .s_axi_bresp_o  (axi_bresp_w),
+      .s_axi_bvalid_o (axi_bvalid_w),
+      .s_axi_bready_i (axi_bready_w),
+
+      .s_axi_araddr_i (axi_araddr_w),
+      .s_axi_arvalid_i(axi_arvalid_w),
+      .s_axi_arready_o(axi_arready_w),
+
+      .s_axi_rdata_o  (axi_rdata_w),
+      .s_axi_rresp_o  (axi_rresp_w),
+      .s_axi_rvalid_o (axi_rvalid_w),
+      .s_axi_rready_i (axi_rready_w)
+      // =====================================================
   );
 endmodule

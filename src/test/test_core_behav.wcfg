@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="test_core_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="test_core" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="3,767.113 ns"></ZoomStartTime>
+      <ZoomEndTime time="4,687.114 ns"></ZoomEndTime>
+      <Cursor1Time time="7,260.242 ns"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="325"></NameColumnWidth>
+      <ValueColumnWidth column_width="106"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="11" />
+   <wvobject fp_name="/test_core/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/test_core/rst" type="logic">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
+   </wvobject>
+   <wvobject fp_name="group50" type="group">
+      <obj_property name="label">icache</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/test_core/icache_addr_w" type="array">
+         <obj_property name="ElementShortName">icache_addr_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">icache_addr_w[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/icache_data_w" type="array">
+         <obj_property name="ElementShortName">icache_data_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">icache_data_w[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/icache_done_w" type="logic">
+         <obj_property name="ElementShortName">icache_done_w</obj_property>
+         <obj_property name="ObjectShortName">icache_done_w</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/icache_enable_w" type="logic">
+         <obj_property name="ElementShortName">icache_enable_w</obj_property>
+         <obj_property name="ObjectShortName">icache_enable_w</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group73" type="group">
+      <obj_property name="label">forward</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/id_ex_rs1_r" type="array">
+         <obj_property name="ElementShortName">id_ex_rs1_r[4:0]</obj_property>
+         <obj_property name="ObjectShortName">id_ex_rs1_r[4:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/id_ex_rs2_r" type="array">
+         <obj_property name="ElementShortName">id_ex_rs2_r[4:0]</obj_property>
+         <obj_property name="ObjectShortName">id_ex_rs2_r[4:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/id_ex_rd_r" type="array">
+         <obj_property name="ElementShortName">id_ex_rd_r[4:0]</obj_property>
+         <obj_property name="ObjectShortName">id_ex_rd_r[4:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/id_ex_rs1_data_r" type="array">
+         <obj_property name="ElementShortName">id_ex_rs1_data_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">id_ex_rs1_data_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/id_ex_rs2_data_r" type="array">
+         <obj_property name="ElementShortName">id_ex_rs2_data_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">id_ex_rs2_data_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/ex_mem_ex_result_r" type="array">
+         <obj_property name="ElementShortName">ex_mem_ex_result_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ex_mem_ex_result_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/ex_mem_rd_r" type="array">
+         <obj_property name="ElementShortName">ex_mem_rd_r[4:0]</obj_property>
+         <obj_property name="ObjectShortName">ex_mem_rd_r[4:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/ex_mem_rd_valid_r" type="logic">
+         <obj_property name="ElementShortName">ex_mem_rd_valid_r</obj_property>
+         <obj_property name="ObjectShortName">ex_mem_rd_valid_r</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/mem_wb_rd_r" type="array">
+         <obj_property name="ElementShortName">mem_wb_rd_r[4:0]</obj_property>
+         <obj_property name="ObjectShortName">mem_wb_rd_r[4:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/mem_wb_rd_value_r" type="array">
+         <obj_property name="ElementShortName">mem_wb_rd_value_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">mem_wb_rd_value_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/ex_rs1_data_w" type="array">
+         <obj_property name="ElementShortName">ex_rs1_data_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ex_rs1_data_w[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/ex_rs2_data_w" type="array">
+         <obj_property name="ElementShortName">ex_rs2_data_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ex_rs2_data_w[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group60" type="group">
+      <obj_property name="label">PipelineTrack</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/if_id_pc_r" type="array">
+         <obj_property name="ElementShortName">if_id_pc_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">if_id_pc_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/if_id_inst_r" type="array">
+         <obj_property name="ElementShortName">if_id_inst_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">if_id_inst_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/id_ex_pc_r" type="array">
+         <obj_property name="ElementShortName">id_ex_pc_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">id_ex_pc_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/id_ex_inst_r" type="array">
+         <obj_property name="ElementShortName">id_ex_inst_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">id_ex_inst_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/ex_mem_pc_r" type="array">
+         <obj_property name="ElementShortName">ex_mem_pc_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ex_mem_pc_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/ex_mem_inst_r" type="array">
+         <obj_property name="ElementShortName">ex_mem_inst_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ex_mem_inst_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/mem_wb_pc_r" type="array">
+         <obj_property name="ElementShortName">mem_wb_pc_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">mem_wb_pc_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/mem_wb_inst_r" type="array">
+         <obj_property name="ElementShortName">mem_wb_inst_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">mem_wb_inst_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group96" type="group">
+      <obj_property name="label">csr</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/test_core/uut_core/csr/mstatus_r" type="array">
+         <obj_property name="ElementShortName">mstatus_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">mstatus_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FF0080</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/csr/mtvec_r" type="array">
+         <obj_property name="ElementShortName">mtvec_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">mtvec_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FF0080</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/csr/mepc_r" type="array">
+         <obj_property name="ElementShortName">mepc_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">mepc_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FF0080</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group49" type="group">
+      <obj_property name="label">Reg</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/test_core/uut_core/regfile/x1_ra_r" type="array">
+         <obj_property name="ElementShortName">x1_ra_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x1_ra_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x4_tp_r" type="array">
+         <obj_property name="ElementShortName">x4_tp_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x4_tp_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x2_sp_r" type="array">
+         <obj_property name="ElementShortName">x2_sp_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x2_sp_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x3_gp_r" type="array">
+         <obj_property name="ElementShortName">x3_gp_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x3_gp_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x5_t0_r" type="array">
+         <obj_property name="ElementShortName">x5_t0_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x5_t0_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x6_t1_r" type="array">
+         <obj_property name="ElementShortName">x6_t1_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x6_t1_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x7_t2_r" type="array">
+         <obj_property name="ElementShortName">x7_t2_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x7_t2_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x8_s0_r" type="array">
+         <obj_property name="ElementShortName">x8_s0_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x8_s0_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x9_s1_r" type="array">
+         <obj_property name="ElementShortName">x9_s1_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x9_s1_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x10_a0_r" type="array">
+         <obj_property name="ElementShortName">x10_a0_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x10_a0_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x11_a1_r" type="array">
+         <obj_property name="ElementShortName">x11_a1_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x11_a1_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x12_a2_r" type="array">
+         <obj_property name="ElementShortName">x12_a2_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x12_a2_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x13_a3_r" type="array">
+         <obj_property name="ElementShortName">x13_a3_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x13_a3_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x14_a4_r" type="array">
+         <obj_property name="ElementShortName">x14_a4_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x14_a4_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x15_a5_r" type="array">
+         <obj_property name="ElementShortName">x15_a5_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x15_a5_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x16_a6_r" type="array">
+         <obj_property name="ElementShortName">x16_a6_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x16_a6_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x17_a7_r" type="array">
+         <obj_property name="ElementShortName">x17_a7_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x17_a7_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x18_s2_r" type="array">
+         <obj_property name="ElementShortName">x18_s2_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x18_s2_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x19_s3_r" type="array">
+         <obj_property name="ElementShortName">x19_s3_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x19_s3_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x20_s4_r" type="array">
+         <obj_property name="ElementShortName">x20_s4_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x20_s4_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x21_s5_r" type="array">
+         <obj_property name="ElementShortName">x21_s5_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x21_s5_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x22_s6_r" type="array">
+         <obj_property name="ElementShortName">x22_s6_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x22_s6_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x23_s7_r" type="array">
+         <obj_property name="ElementShortName">x23_s7_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x23_s7_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x24_s8_r" type="array">
+         <obj_property name="ElementShortName">x24_s8_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x24_s8_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x25_s9_r" type="array">
+         <obj_property name="ElementShortName">x25_s9_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x25_s9_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x26_s10_r" type="array">
+         <obj_property name="ElementShortName">x26_s10_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x26_s10_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x27_s11_r" type="array">
+         <obj_property name="ElementShortName">x27_s11_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x27_s11_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x28_t3_r" type="array">
+         <obj_property name="ElementShortName">x28_t3_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x28_t3_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x29_t4_r" type="array">
+         <obj_property name="ElementShortName">x29_t4_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x29_t4_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x30_t5_r" type="array">
+         <obj_property name="ElementShortName">x30_t5_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x30_t5_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/regfile/x31_t6_r" type="array">
+         <obj_property name="ElementShortName">x31_t6_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">x31_t6_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#DCDCDC</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group92" type="group">
+      <obj_property name="label">muldiv</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/test_core/uut_core/multiplier/status_r" type="array">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">status_r[3:0]</obj_property>
+         <obj_property name="ObjectShortName">status_r[3:0]</obj_property>
+         <obj_property name="label">multiplier_status_r[3:0]</obj_property>
+         <obj_property name="CustomSignalColor">#008080</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/divider/status_r" type="array">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">status_r[2:0]</obj_property>
+         <obj_property name="ObjectShortName">status_r[2:0]</obj_property>
+         <obj_property name="label">divider_status_r[2:0]</obj_property>
+         <obj_property name="CustomSignalColor">#008080</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/divider/input_valid_r" type="logic">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">input_valid_r</obj_property>
+         <obj_property name="ObjectShortName">input_valid_r</obj_property>
+         <obj_property name="label">divider_input_valid_r</obj_property>
+         <obj_property name="CustomSignalColor">#008080</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/divider/out_valid_w" type="logic">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">out_valid_w</obj_property>
+         <obj_property name="ObjectShortName">out_valid_w</obj_property>
+         <obj_property name="label">divider_out_valid_w</obj_property>
+         <obj_property name="CustomSignalColor">#008080</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group83" type="group">
+      <obj_property name="label">harzard</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/test_core/uut_core/multiplier/stall_o" type="logic">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">stall_o</obj_property>
+         <obj_property name="ObjectShortName">stall_o</obj_property>
+         <obj_property name="label">multiplier_stall_o</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/divider/stall_o" type="logic">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">stall_o</obj_property>
+         <obj_property name="ObjectShortName">stall_o</obj_property>
+         <obj_property name="label">divider_stall_o</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/if_enable_r" type="logic">
+         <obj_property name="ElementShortName">if_enable_r</obj_property>
+         <obj_property name="ObjectShortName">if_enable_r</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/control_harzard_r" type="logic">
+         <obj_property name="ElementShortName">control_harzard_r</obj_property>
+         <obj_property name="ObjectShortName">control_harzard_r</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/stall_w" type="logic">
+         <obj_property name="ElementShortName">stall_w</obj_property>
+         <obj_property name="ObjectShortName">stall_w</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/data_harzard_w" type="logic">
+         <obj_property name="ElementShortName">data_harzard_w</obj_property>
+         <obj_property name="ObjectShortName">data_harzard_w</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/control_harzard_w" type="logic">
+         <obj_property name="ElementShortName">control_harzard_w</obj_property>
+         <obj_property name="ObjectShortName">control_harzard_w</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/fetch/stall_o" type="logic">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">stall_o</obj_property>
+         <obj_property name="ObjectShortName">stall_o</obj_property>
+         <obj_property name="label">fetch_stall_o</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/lsu/stall_o" type="logic">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">stall_o</obj_property>
+         <obj_property name="ObjectShortName">stall_o</obj_property>
+         <obj_property name="label">lsu_stall_o</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group87" type="group">
+      <obj_property name="label">branch</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/test_core/uut_core/exec/pc_branch_o" type="array">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">pc_branch_o[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pc_branch_o[31:0]</obj_property>
+         <obj_property name="label">exec_pc_branch_o[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/exec/pc_take_branch_o" type="logic">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">pc_take_branch_o</obj_property>
+         <obj_property name="ObjectShortName">pc_take_branch_o</obj_property>
+         <obj_property name="label">exec_pc_take_branch_o</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/ex_mem_pc_branch_r" type="array">
+         <obj_property name="ElementShortName">ex_mem_pc_branch_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ex_mem_pc_branch_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/pipeline_ctrl/ex_mem_pc_take_branch_r" type="logic">
+         <obj_property name="ElementShortName">ex_mem_pc_take_branch_r</obj_property>
+         <obj_property name="ObjectShortName">ex_mem_pc_take_branch_r</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/uut_core/fetch/pc_r" type="array">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">pc_r[31:0]</obj_property>
+         <obj_property name="ObjectShortName">pc_r[31:0]</obj_property>
+         <obj_property name="label">fetch_pc_r[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FFA500</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group51" type="group">
+      <obj_property name="label">dcache</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/test_core/dcache_data_rd_w" type="array">
+         <obj_property name="ElementShortName">dcache_data_rd_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">dcache_data_rd_w[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/dcache_done_w" type="logic">
+         <obj_property name="ElementShortName">dcache_done_w</obj_property>
+         <obj_property name="ObjectShortName">dcache_done_w</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/dcache_enable_w" type="logic">
+         <obj_property name="ElementShortName">dcache_enable_w</obj_property>
+         <obj_property name="ObjectShortName">dcache_enable_w</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/dcache_wr_w" type="logic">
+         <obj_property name="ElementShortName">dcache_wr_w</obj_property>
+         <obj_property name="ObjectShortName">dcache_wr_w</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/dcache_rd_w" type="logic">
+         <obj_property name="ElementShortName">dcache_rd_w</obj_property>
+         <obj_property name="ObjectShortName">dcache_rd_w</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/dcache_addr_w" type="array">
+         <obj_property name="ElementShortName">dcache_addr_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">dcache_addr_w[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/dcache_data_wr_w" type="array">
+         <obj_property name="ElementShortName">dcache_data_wr_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">dcache_data_wr_w[31:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/test_core/dcache_mask_wr_w" type="array">
+         <obj_property name="ElementShortName">dcache_mask_wr_w[31:0]</obj_property>
+         <obj_property name="ObjectShortName">dcache_mask_wr_w[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+</wave_config>

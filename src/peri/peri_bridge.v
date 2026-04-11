@@ -16,10 +16,12 @@
 `define MEM_TIMER_TIMECMP   32'h10000010// 比较值低32位
 `define MEM_TIMER_TIMECMPH  32'h10000014// 比较值高32位
 
-
-`define MEM_VRAM_ADDR       32'h20000000
 `define MEM_LED_ADDR        32'h30000000
 `define MEM_SWITCH_ADDR     32'h40000000
+`define MEM_KEYBOARD_ADDR   32'h50000000  // 键盘外设基地址（只读，返回4位键值）
+`define MEM_SEG_ADDR        32'h60000000  // 数码管外设基地址（只写，接收32位数据，8个4位BCD码）
+`define MEM_PWM_ADDR        32'h70000000  // PWM控制器基地址
+`define MEM_WATCHDOG_ADDR   32'h90000000  // 看门狗基地址
 `define MEM_RAM_ADDR        32'h80000000
 // verilog_format: on
 
@@ -41,6 +43,25 @@ module peri_bridge (
     output [31:0] dram_data_rd_o,   // 读数据
     output        dram_done_o,      // 完成标志
 
+    // ========== AXI4-Lite Master 接口 (必须要有这部分) ==========
+    output reg [31:0] m_axi_awaddr_o,
+    output reg        m_axi_awvalid_o,
+    input             m_axi_awready_i,
+    output reg [31:0] m_axi_wdata_o,
+    output reg [3:0]  m_axi_wstrb_o,
+    output reg        m_axi_wvalid_o,
+    input             m_axi_wready_i,
+    input      [1:0]  m_axi_bresp_i,
+    input             m_axi_bvalid_i,
+    output reg        m_axi_bready_o,
+    output reg [31:0] m_axi_araddr_o,
+    output reg        m_axi_arvalid_o,
+    input             m_axi_arready_i,
+    input      [31:0] m_axi_rdata_i,
+    input      [1:0]  m_axi_rresp_i,
+    input             m_axi_rvalid_i,
+    output reg        m_axi_rready_o,
+
     // ========== UART接口 ==========
     output       tx_enable_o,       // 发送使能
     output [7:0] tx_data_o,         // 发送数据
@@ -58,16 +79,6 @@ module peri_bridge (
     output reg [31:0] timer_timecmp_o,  // 写入比较值
     output reg [31:0] timer_timecmph_o,
 
-    // ========== VRAM接口 ==========
-    input  [31:0] vram_data_rd_i,   // 从VRAM读取的数据
-    input         vram_done_i,      // VRAM操作完成
-    output reg        vram_enable_o,    // VRAM使能
-    output reg        vram_wr_o,        // VRAM写使能
-    output reg        vram_rd_o,        // VRAM读使能
-    output reg [31:0] vram_addr_o,      // VRAM地址
-    output reg [31:0] vram_data_wr_o,   // VRAM写数据
-    output reg [31:0] vram_mask_wr_o,   // VRAM写掩码
-
     // ========== LED接口 ==========
     output reg [4:0] led_idx_o,         // LED索引
     output reg       led_wr_o,          // LED写使能
@@ -78,15 +89,30 @@ module peri_bridge (
     output reg [4:0] switch_idx_o,      // Switch索引
     input            switch_status_i,   // Switch状态
 
-    // ========== RAM接口 ==========
-    input      [31:0] ram_data_rd_i,    // RAM读数据
-    input             ram_done_i,       // RAM完成
-    output reg        ram_enable_o,     // RAM使能
-    output reg        ram_wr_o,         // RAM写使能
-    output reg        ram_rd_o,         // RAM读使能
-    output reg [31:0] ram_addr_o,       // RAM地址
-    output reg [31:0] ram_data_wr_o,    // RAM写数据
-    output reg [31:0] ram_mask_wr_o     // RAM写掩码
+    // ========== Keyboard接口 ==========
+    // 4x4矩阵键盘，只读接口，支持程序查询方式
+    input      [3:0] keyboard_val_i,    // 键盘当前按键值（0-F）
+    input            keyboard_ready_i,  // 键盘数据就绪标志（1=有新按键，0=无新数据）
+    output reg       keyboard_rd_o,     // 键盘读取信号（通知键盘清除就绪标志）
+
+    // ========== Segment Display接口 ==========
+    // 七段数码管显示，只写接口
+    output reg        seg_wr_o,          // 数码管写使能
+    output reg [31:0] seg_data_o,        // 数码管显示数据（8个4位BCD码）
+
+    // ========== PWM接口 ==========    
+    output reg        pwm_reg_wr_o,      // PWM寄存器写使能
+    output reg        pwm_reg_rd_o,      // PWM寄存器读使能
+    output reg [31:0] pwm_reg_addr_o,    // PWM寄存器地址
+    output reg [31:0] pwm_reg_data_wr_o, // PWM寄存器写数据
+    input  [31:0]     pwm_reg_data_rd_i, // PWM寄存器读数据
+    
+    // ========== 看门狗接口 ==========    
+    output reg        wdt_reg_wr_o,      // 看门狗寄存器写使能
+    output reg        wdt_reg_rd_o,      // 看门狗寄存器读使能
+    output reg [31:0] wdt_reg_addr_o,    // 看门狗寄存器地址
+    output reg [31:0] wdt_reg_data_wr_o, // 看门狗寄存器写数据
+    input  [31:0]     wdt_reg_data_rd_i  // 看门狗寄存器读数据
 );
 // UART内部寄存器
 reg [31:0] uart_tx_data_r;   // 发送数据缓冲
@@ -96,12 +122,14 @@ reg [31:0] uart_rx_data_r;   // 接收数据缓冲
 reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
 
   // bridge
-  localparam STATUS_IDLE = 2'b00;
-  localparam STATUS_INIT = 2'b01;
-  localparam STATUS_WAIT = 2'b10;
-  localparam STATUS_DONE = 2'b11;
+  localparam STATUS_IDLE = 3'b000;
+  localparam STATUS_INIT = 3'b001;
+  localparam STATUS_WAIT = 3'b010;
+  localparam STATUS_DONE = 3'b011;
+  localparam STATUS_AXI_WRITE = 3'b100;
+  localparam STATUS_AXI_READ  = 3'b101;
 
-  reg [ 1:0] status_r;
+  reg [ 2:0] status_r;
 
   reg        dram_rd_r;
   reg        dram_wr_r;
@@ -116,6 +144,13 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
   assign dram_done_o    = dram_done_r;
   assign tx_enable_o    = uart_tx_enable_r;
   assign tx_data_o      = uart_tx_data_r;
+
+function [3:0] gen_wstrb;
+      input [31:0] mask;
+      begin
+          gen_wstrb = {mask[24], mask[16], mask[8], mask[0]};
+      end
+  endfunction
 
   always @(posedge clk_i or posedge rst_i) begin
     if (rst_i) begin
@@ -135,6 +170,28 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
 
       timer_timecmp_o  <= 32'hffffffff;
       timer_timecmph_o <= 32'hffffffff;
+
+      m_axi_awvalid_o <= 0;
+      m_axi_wvalid_o  <= 0;
+      m_axi_bready_o  <= 0;
+      m_axi_arvalid_o <= 0;
+      m_axi_rready_o  <= 0;
+      m_axi_awaddr_o  <= 0;
+      m_axi_wdata_o   <= 0;
+      m_axi_wstrb_o   <= 0;
+      m_axi_araddr_o  <= 0;
+
+      keyboard_rd_o    <= 1'b0;
+      
+      pwm_reg_wr_o     <= 1'b0;
+      pwm_reg_rd_o     <= 1'b0;
+      pwm_reg_addr_o   <= 32'h0;
+      pwm_reg_data_wr_o <= 32'h0;
+      
+      wdt_reg_wr_o     <= 1'b0;
+      wdt_reg_rd_o     <= 1'b0;
+      wdt_reg_addr_o   <= 32'h0;
+      wdt_reg_data_wr_o <= 32'h0;
     end else begin
       // UART状态更新
       if (tx_done_i) uart_tx_flag_r <= 32'h0;// 发送完成，清除忙标志
@@ -159,6 +216,23 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
         STATUS_INIT: begin
           status_r <= STATUS_WAIT;
           case (dram_addr_r & `MEM_RAM_MASK)// 根据高4位判断外设
+          // ========== RAM访问 ==========
+            `MEM_RAM_ADDR: begin
+               if (dram_wr_r) begin
+                 m_axi_awaddr_o  <= dram_addr_r;
+                 m_axi_awvalid_o <= 1'b1;
+                 m_axi_wdata_o   <= dram_data_wr_r;
+                 m_axi_wstrb_o   <= gen_wstrb(dram_mask_wr_r);
+                 m_axi_wvalid_o  <= 1'b1;
+                 m_axi_bready_o  <= 1'b1;
+                 status_r        <= STATUS_AXI_WRITE;
+               end else begin
+                 m_axi_araddr_o  <= dram_addr_r;
+                 m_axi_arvalid_o <= 1'b1;
+                 m_axi_rready_o  <= 1'b1;
+                 status_r        <= STATUS_AXI_READ;
+               end
+            end
 
           // ========== UART访问 ==========
             `MEM_UART_ADDR: begin
@@ -220,18 +294,6 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               end
             end
 
-        // ========== VRAM访问 ==========
-            `MEM_VRAM_ADDR: begin
-              // VRAM需要多周期访问
-              status_r       <= STATUS_WAIT;
-              vram_enable_o  <= 1'b1;
-              vram_wr_o      <= dram_wr_r;
-              vram_rd_o      <= dram_rd_r;
-              vram_addr_o    <= {4'h0, dram_addr_r[27:0]};
-              vram_data_wr_o <= dram_data_wr_r;
-              vram_mask_wr_o <= dram_mask_wr_r;
-            end
-
             // ========== LED访问 ==========
             `MEM_LED_ADDR: begin
               status_r        <= STATUS_WAIT;
@@ -246,32 +308,70 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               switch_idx_o <= dram_addr_r[4:0];
             end
 
-            // ========== RAM访问 ==========
-            `MEM_RAM_ADDR: begin  // ram
-              status_r      <= STATUS_WAIT;
-              ram_enable_o  <= 1'b1;
-              ram_wr_o      <= dram_wr_r;
-              ram_rd_o      <= dram_rd_r;
-              ram_addr_o    <= {4'h0, dram_addr_r[27:0]};
-              ram_data_wr_o <= dram_data_wr_r;
-              ram_mask_wr_o <= dram_mask_wr_r;
+            // ========== Keyboard访问 ==========
+            // 键盘为只读外设，采用程序查询方式
+            // 进入STATUS_WAIT后检查data_ready标志，未就绪时持续等待
+            `MEM_KEYBOARD_ADDR: begin
+              status_r <= STATUS_WAIT;
+              keyboard_rd_o <= 1'b0;  // 初始化读取信号
+            end
+
+            // ========== Segment Display访问 ==========
+            // 数码管为只写外设，接收32位数据（8个4位BCD码）
+            // seg_wr_o控制数码管模块的写使能
+            `MEM_SEG_ADDR: begin
+              status_r    <= STATUS_WAIT;
+              seg_wr_o    <= dram_wr_r;        // 传递写使能信号
+              seg_data_o  <= dram_data_wr_r;   // 传递32位数据（8个BCD码）
+            end
+
+            // ========== PWM访问 ==========
+            `MEM_PWM_ADDR: begin
+              status_r <= STATUS_WAIT;
+              
+              // 直接将PWM寄存器的读写信号传递给PWM模块
+              pwm_reg_wr_o <= dram_wr_r;
+              pwm_reg_rd_o <= dram_rd_r;
+              pwm_reg_addr_o <= dram_addr_r;
+              pwm_reg_data_wr_o <= dram_data_wr_r;
+            end
+            
+            // ========== 看门狗访问 ==========
+            `MEM_WATCHDOG_ADDR: begin
+              status_r <= STATUS_WAIT;
+              
+              // 直接将看门狗寄存器的读写信号传递给看门狗模块
+              wdt_reg_wr_o <= dram_wr_r;
+              wdt_reg_rd_o <= dram_rd_r;
+              wdt_reg_addr_o <= dram_addr_r;
+              wdt_reg_data_wr_o <= dram_data_wr_r;
             end
 
             default: status_r <= STATUS_DONE;
           endcase
         end
 
+        STATUS_AXI_WRITE: begin
+          if (m_axi_awready_i) m_axi_awvalid_o <= 0;
+          if (m_axi_wready_i)  m_axi_wvalid_o  <= 0;
+          if (m_axi_bvalid_i) begin
+            m_axi_bready_o <= 0;
+            dram_done_r    <= 1'b1;
+            status_r       <= STATUS_DONE;
+          end
+        end
+        STATUS_AXI_READ: begin
+          if (m_axi_arready_i) m_axi_arvalid_o <= 0;
+          if (m_axi_rvalid_i) begin
+            dram_data_rd_r <= m_axi_rdata_i;
+            m_axi_rready_o <= 0;
+            dram_done_r    <= 1'b1;
+            status_r       <= STATUS_DONE;
+          end
+        end
+
         STATUS_WAIT: begin
           case (dram_addr_r & `MEM_RAM_MASK)
-            `MEM_VRAM_ADDR: begin  // vram
-              status_r <= STATUS_WAIT;
-              vram_enable_o <= 1'b0;
-              if (vram_done_i) begin
-                status_r       <= STATUS_DONE;
-                dram_data_rd_r <= vram_data_rd_i;
-                dram_done_r    <= 1'b1;
-              end
-            end
 
             `MEM_LED_ADDR: begin  // led
               status_r    <= STATUS_DONE;
@@ -285,14 +385,50 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
               dram_done_r    <= 1'b1;
             end
 
-            `MEM_RAM_ADDR: begin  // ram
-              status_r <= STATUS_WAIT;
-              ram_enable_o <= 1'b0;
-              if (ram_done_i) begin
+            // ========== Keyboard程序查询方式读取 ==========
+            // 检查data_ready标志：
+            //   - 未就绪(0)：保持STATUS_WAIT，CPU继续阻塞等待
+            //   - 已就绪(1)：读取数据，发送rd信号清除标志，完成操作
+            `MEM_KEYBOARD_ADDR: begin  // keyboard
+              if (keyboard_ready_i) begin
+                // 数据就绪，可以读取
                 status_r       <= STATUS_DONE;
-                dram_data_rd_r <= ram_data_rd_i;
+                dram_data_rd_r <= {28'h0, keyboard_val_i};  // 高28位填0，低4位为键值
                 dram_done_r    <= 1'b1;
+                keyboard_rd_o  <= 1'b1;  // 发送读取信号，通知键盘清除就绪标志
+              end else begin
+                // 数据未就绪，继续等待（CPU阻塞）
+                status_r <= STATUS_WAIT;
               end
+            end
+
+            // ========== Segment Display写入完成 ==========
+            // 数码管写操作无需返回数据，直接完成
+            `MEM_SEG_ADDR: begin  // segment display
+              status_r    <= STATUS_DONE;
+              dram_done_r <= 1'b1;  // 写操作完成标志
+            end
+            
+            // ========== PWM访问完成 ==========
+            `MEM_PWM_ADDR: begin
+              status_r <= STATUS_DONE;
+              dram_done_r <= 1'b1;
+              if (dram_rd_r) begin
+                dram_data_rd_r <= pwm_reg_data_rd_i;
+              end
+              pwm_reg_wr_o <= 1'b0;
+              pwm_reg_rd_o <= 1'b0;
+            end
+            
+            // ========== 看门狗访问完成 ==========
+            `MEM_WATCHDOG_ADDR: begin
+              status_r <= STATUS_DONE;
+              dram_done_r <= 1'b1;
+              if (dram_rd_r) begin
+                dram_data_rd_r <= wdt_reg_data_rd_i;
+              end
+              wdt_reg_wr_o <= 1'b0;
+              wdt_reg_rd_o <= 1'b0;
             end
             default: status_r <= STATUS_DONE;
           endcase
@@ -302,6 +438,11 @@ reg [31:0] uart_rx_flag_r;   // 0: receiving, 1: done
           status_r <= STATUS_IDLE;
           uart_tx_enable_r <= 1'b0;
           dram_done_r <= 1'b0;
+          keyboard_rd_o <= 1'b0;  // 清除键盘读取信号
+          pwm_reg_wr_o <= 1'b0;
+          pwm_reg_rd_o <= 1'b0;
+          wdt_reg_wr_o <= 1'b0;
+          wdt_reg_rd_o <= 1'b0;
         end
 
         default: ;

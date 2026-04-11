@@ -4,12 +4,16 @@ module test_peri_uart;
   reg        clk;
   reg        rst;
 
+//发送接口
   reg        tx_enable;
   reg  [7:0] tx_data;
-  reg        rx;
 
+  //接收接口
+  reg        rx;
   wire       rx_done;
   wire [7:0] rx_data;
+
+  //发送输出
   wire       tx;
 
   peri_uart uut (
@@ -25,7 +29,10 @@ module test_peri_uart;
       .tx_o(tx)
   );
 
+//环回测试
   always #10 clk = ~clk;
+
+   // 将TX连接到RX，实现环回
   always @(posedge clk) begin
     rx <= tx;
   end
@@ -34,7 +41,7 @@ module test_peri_uart;
     rst = 1'b1;
 
     tx_enable = 1'b1;
-    tx_data = "!";
+    tx_data = "!";// 发送字符'!'
     rx = 1'b1;
 
     #10;
